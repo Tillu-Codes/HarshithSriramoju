@@ -1,0 +1,345 @@
+/* =====================================================================
+   GRAPHIC DESIGN PORTFOLIO 2026 — Behance project page replica
+   Palette + type taken from the source project's inline styles:
+     content bg  #181a1a · title #191919 · muted #a4a4a4 · body #696969
+   ===================================================================== */
+
+:root{
+  --canvas: 1400px;            /* Behance project canvas width */
+  --bg-content: #181a1a;
+  --ink: #191919;
+  --muted: #a4a4a4;
+  --body: #696969;
+  --line: #e8e8e8;
+  --blue: #0057ff;
+  --blue-link: #1769ff;
+  --white: #fff;
+
+  --ease: cubic-bezier(.16,.84,.34,1);
+}
+
+*,*::before,*::after{ box-sizing:border-box }
+
+html{ -webkit-text-size-adjust:100% }
+html.chromeSmooth{ scroll-behavior:smooth }
+
+body{
+  margin:0;
+  background:#f9f9f9;
+  color:var(--ink);
+  font-family:Helvetica,Arial,"Helvetica Neue",sans-serif;
+  font-size:16px;
+  line-height:1.4;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+img{ display:block; max-width:100% }
+a{ color:inherit; text-decoration:none }
+button{ font:inherit; color:inherit; border:0; background:none; cursor:pointer }
+
+/* -------------------------------------------------------- MODULE STREAM */
+.stream{ background:var(--bg-content); padding:0 }
+.stream__inner{ max-width:var(--canvas); margin:0 auto }
+
+.module{ position:relative; opacity:1 }
+.module.can-reveal{ opacity:0; transform:translateY(var(--rd,48px)); will-change:opacity,transform }
+.module.can-reveal.in{
+  opacity:1; transform:none;
+  transition:opacity var(--rdur,900ms) var(--ease) var(--rdelay,0ms),
+             transform var(--rdur,900ms) var(--ease) var(--rdelay,0ms);
+}
+
+.shot{ position:relative; overflow:hidden; background:var(--ph,#202222) }
+.shot img{ width:100%; height:auto; display:block }
+.shot.can-fade img{ opacity:0; transition:opacity var(--fdur,600ms) ease }
+.shot.can-fade.loaded img{ opacity:1 }
+.shot.can-zoom{ cursor:zoom-in }
+.shot.can-drift img{ transition:transform var(--ddur,1400ms) var(--ease) }
+.shot.can-zoom:hover img{ transform:scale(1.012) }
+
+/* collections — Behance lays tiles out in rows weighted by aspect ratio */
+.coll__row{ display:flex; align-items:stretch; gap:2px }
+.coll__row + .coll__row{ margin-top:2px }
+.coll__cell{ position:relative; overflow:hidden; flex:0 0 auto }
+.coll__cell img{ width:100%; height:100%; object-fit:cover }
+
+/* video + third-party embeds */
+.embed{ background:#191919; padding:0 }
+.embed iframe{ display:block; width:100%; border:0 }
+.embed__box{ position:relative; width:100%; height:0; padding-bottom:56.25% }
+.embed__box iframe{ position:absolute; inset:0; width:100%; height:100%; border:0 }
+
+.caption{
+  max-width:var(--canvas); margin:0 auto; padding:14px 16px 22px;
+  font-size:14px; font-style:italic; color:var(--muted);
+}
+
+/* ------------------------------------------------------------ LIGHTBOX */
+.lb{
+  position:fixed; inset:0; z-index:200; background:rgba(12,12,12,.95);
+  display:flex; align-items:center; justify-content:center; padding:56px;
+  opacity:0; transition:opacity var(--lbdur,420ms) ease;
+}
+.lb.show{ opacity:1 }
+.lb[hidden]{ display:none }
+.lb__stage{ margin:0; max-width:100%; max-height:100% }
+.lb__stage img{
+  max-width:100%; max-height:calc(100vh - 112px); width:auto; height:auto;
+  border-radius:4px; box-shadow:0 24px 70px rgba(0,0,0,.6);
+  transform:scale(.94); transition:transform var(--lbdur,420ms) var(--ease);
+}
+.lb.show .lb__stage img{ transform:none }
+.lb__close,.lb__nav{
+  position:absolute; color:#fff; background:rgba(255,255,255,.09);
+  border-radius:50%; display:flex; align-items:center; justify-content:center;
+  transition:background .25s, transform .25s var(--ease);
+}
+.lb__close{ top:20px; right:20px; width:44px; height:44px; font-size:28px; line-height:1 }
+.lb__nav{ top:50%; transform:translateY(-50%); width:48px; height:48px; font-size:34px; line-height:1 }
+.lb__nav--prev{ left:20px }
+.lb__nav--next{ right:20px }
+.lb__close:hover,.lb__nav:hover{ background:rgba(255,255,255,.2) }
+.lb__nav--prev:hover{ transform:translateY(-50%) translateX(-3px) }
+.lb__nav--next:hover{ transform:translateY(-50%) translateX(3px) }
+
+/* ------------------------------------------------------------ BACK TOP */
+.totop{
+  position:fixed; right:26px; bottom:26px; z-index:70;
+  width:46px; height:46px; border-radius:50%; background:var(--ink); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; visibility:hidden; transform:translateY(14px) scale(.85);
+  transition:opacity .3s, visibility .3s, transform .3s var(--ease), background .25s;
+  box-shadow:0 8px 24px rgba(0,0,0,.28);
+}
+.totop svg{ fill:currentColor; width:22px; height:22px }
+.totop.show{ opacity:1; visibility:visible; transform:none }
+.totop:hover{ background:var(--blue); transform:translateY(-3px) }
+
+/* --------------------------------------------------------- ABOUT SLIDE
+   Module type "about" (page 2). The original was a flat raster image;
+   this rebuilds it as live text on the same 1400x788 canvas.
+
+   `--u` is ONE design pixel. Every number below is the real pixel
+   position measured off the source slide, so `calc(474 * var(--u))`
+   simply means "x = 474". Change a number, reload, done.
+   -------------------------------------------------------------------- */
+.module[data-type="about"]{ container-type:inline-size }
+
+.about{
+  --u:1px;
+  --ab-paper:#e2e2e3;
+  --ab-grid:#d0cfd0;
+  --ab-ink:#151717;
+  --ab-body:#202022;
+  --ab-muted:#38383b;
+  --ab-red:#91434f;
+  --ab-red-hi:#b8242b;
+
+  position:relative;
+  width:100%;
+  aspect-ratio:1400/788;
+  overflow:hidden;
+  background-color:var(--ab-paper);
+  background-image:
+    linear-gradient(to right,var(--ab-grid) 1px,transparent 1px),
+    linear-gradient(to bottom,var(--ab-grid) 1px,transparent 1px);
+  background-size:calc(45 * var(--u)) calc(45 * var(--u));
+  background-position:calc(1 * var(--u)) calc(25 * var(--u));
+  color:var(--ab-ink);
+  font-family:Helvetica,Arial,"Helvetica Neue",sans-serif;
+}
+/* one design pixel = 1/1400 of the slide's real width, so the whole
+   page scales like an image instead of reflowing. */
+@supports (container-type:inline-size){
+  .about{ --u:calc(100cqw / 1400) }
+}
+
+/* --- empty selection marquee on the left (pure decoration) -------- */
+.about__frame{
+  position:absolute;
+  left:calc(129 * var(--u));
+  top:calc(82 * var(--u));
+  width:calc(270 * var(--u));
+  height:calc(538 * var(--u));
+  border:calc(2 * var(--u)) solid var(--ab-red);
+  border-bottom:0;
+  pointer-events:none;
+}
+.about__hnd{
+  position:absolute;
+  width:calc(17 * var(--u));
+  height:calc(15 * var(--u));
+  background:#fbfdfd;
+  border:calc(2 * var(--u)) solid var(--ab-red-hi);
+}
+
+/* --- left column: greeting + introduction ------------------------ *
+   padding-top pins the greeting to y=123; min-height pins the
+   EDUCATION block to y=478. Write more intro text and EDUCATION is
+   simply pushed down instead of colliding.                          */
+.about__left{
+  margin-left:calc(474 * var(--u));
+  width:calc(440 * var(--u));
+  padding-top:calc(123 * var(--u));
+  min-height:calc(478 * var(--u));
+}
+.about__greet{
+  margin:0 0 0 calc(-7 * var(--u));   /* offsets Arial Black's left side bearing */
+  font-family:"Arial Black","Archivo Black","Helvetica Neue",Arial,sans-serif;
+  font-weight:900;
+  font-size:calc(99 * var(--u));
+  line-height:.82;
+  letter-spacing:.08em;
+  color:var(--ab-ink);
+}
+.about__lead{
+  margin:calc(18 * var(--u)) 0 0;
+  font-size:calc(15 * var(--u));
+  line-height:1;
+  font-weight:700;
+  color:var(--ab-ink);
+}
+.about__body{
+  margin:calc(19 * var(--u)) 0 0;
+  font-size:calc(15 * var(--u));
+  line-height:calc(17.8 * var(--u));
+  color:var(--ab-body);
+}
+
+/* --- EDUCATION --------------------------------------------------- */
+.about__edu{
+  margin-left:calc(474 * var(--u));
+  width:calc(440 * var(--u));
+}
+.about__edu .about__h{ margin-bottom:calc(25 * var(--u)) }
+
+/* --- right column: skills + experience --------------------------- */
+.about__right{
+  position:absolute;
+  left:calc(992 * var(--u));
+  top:calc(115 * var(--u));
+  width:calc(310 * var(--u));
+}
+.ab-group--skills .about__h{ margin-bottom:calc(27 * var(--u)) }
+.ab-group--xp{ margin-top:calc(51 * var(--u)) }
+.ab-group--xp .about__h{ margin-bottom:calc(28 * var(--u)) }
+
+.about__h{
+  margin:0 0 0 calc(-3 * var(--u));   /* offsets the left side bearing */
+  font-family:"Arial Black","Archivo Black","Helvetica Neue",Arial,sans-serif;
+  font-weight:900;
+  font-size:calc(38 * var(--u));
+  line-height:1;
+  letter-spacing:.05em;
+  color:var(--ab-ink);
+}
+
+/* --- skill tiles -------------------------------------------------- */
+.skgrid{
+  display:grid;
+  grid-template-columns:repeat(2,calc(63 * var(--u)));
+  gap:calc(19 * var(--u)) calc(34 * var(--u));
+}
+.sk{
+  --sk-bg:#1b1b1b; --sk-fg:#fff;
+  display:block;
+  width:calc(63 * var(--u));
+  height:calc(63 * var(--u));
+}
+.sk--ps{ --sk-bg:#001e36; --sk-fg:#31a8ff }
+.sk--ai{ --sk-bg:#330000; --sk-fg:#ff9a00 }
+.sk--ae{ --sk-bg:#00005b; --sk-fg:#9999ff }
+.sk--pr{ --sk-bg:#2a0634; --sk-fg:#ea77ff }
+.sk--fg{ --sk-bg:#1e1e1e; --sk-fg:#f24e1e }
+.sk--bl{ --sk-bg:#e87d0d; --sk-fg:#fff }
+.sk__svg{ display:block; width:100%; height:100% }
+.sk__plate{ fill:var(--sk-bg) }
+.sk__letters{
+  fill:var(--sk-fg);
+  font-family:Helvetica,Arial,sans-serif;
+  font-size:26px;
+  font-weight:700;
+  letter-spacing:-.5px;
+}
+
+/* --- experience / education entries -------------------------------- */
+.ab-entry{ margin:0 }
+.entry__period,
+.entry__muted{ margin:0 }
+.entry__period,
+.entry__strong{
+  font-size:calc(15 * var(--u));
+  line-height:calc(17.8 * var(--u));
+  font-weight:700;
+  color:var(--ab-ink);
+}
+.entry__strong{ margin-top:calc(10 * var(--u)) }
+.entry__muted{
+  font-size:calc(14 * var(--u));
+  line-height:calc(17.8 * var(--u));
+  font-weight:400;
+  color:var(--ab-muted);
+  margin-top:calc(12 * var(--u));
+}
+.ab-entry + .ab-entry{ margin-top:calc(50 * var(--u)) }
+
+/* --- torn-paper footer: real pixels sliced from the source slide --- */
+.about__edge{
+  position:absolute;
+  left:0; bottom:0;
+  width:100%;
+  height:auto;
+  pointer-events:none;
+}
+
+/* --------------------------------------------------------- RESPONSIVE */
+@media (max-width:760px){
+  /* the slide is a fixed canvas; on phones it becomes a real document */
+  .about{
+    --u:1px;
+    aspect-ratio:auto;
+    overflow:visible;
+    padding:44px 22px 90px;
+    background-size:45px 45px;
+    background-position:1px 25px;
+  }
+  .about__frame{ display:none }
+  .about__left,
+  .about__edu{
+    margin-left:0; width:auto; padding-top:0; min-height:0;
+  }
+  .about__edu{ margin-top:34px }
+  .about__right{ position:static; left:auto; top:auto; width:auto; }
+  .about__greet{ font-size:clamp(44px,13vw,58px); line-height:.9 }
+  .about__lead{ font-size:17px; margin-top:18px }
+  .about__body{ font-size:15px; line-height:1.6; margin-top:14px }
+  .about__h{ font-size:26px }
+  .about__edu .about__h,
+  .ab-group--skills .about__h,
+  .ab-group--xp .about__h{ margin-bottom:14px }
+  .ab-group--xp{ margin-top:30px }
+  .skgrid{ grid-template-columns:repeat(4,54px); gap:14px }
+  .sk{ width:54px; height:54px }
+  .entry__period,
+  .entry__strong,
+  .entry__muted{ font-size:15px; line-height:1.5 }
+  .entry__strong,
+  .entry__muted{ margin-top:4px }
+  .ab-entry + .ab-entry{ margin-top:22px }
+  .about__edge{ position:relative; margin-top:34px }
+
+  .coll__row{ flex-direction:column; gap:2px }
+  .coll__row + .coll__row{ margin-top:2px }
+  .coll__cell{ flex:1 1 auto !important; width:100% }
+  .lb{ padding:16px }
+  .lb__nav{ width:40px; height:40px; font-size:28px }
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important; animation-iteration-count:1 !important;
+    transition-duration:.001ms !important; scroll-behavior:auto !important;
+  }
+  .module.can-reveal{ opacity:1; transform:none }
+}
