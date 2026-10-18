@@ -40,6 +40,20 @@ const SETTINGS = {
     pauseWhenHidden: true,
   },
 
+  /* ---- the six-tile video grid (module 8, "LOGOS & MARKS") ----
+     Tiles are silent and still until you point at one. Every flag
+     below is a switch: flip `enabled` off and the module falls back
+     to static thumbnails that never load a video at all.            */
+  videoGrid: {
+    enabled: true,            // false = posters only, no video elements wired up
+    rewindOnLeave: true,      // pause + jump back to 0 when the cursor leaves
+    loop: true,               // keep playing from the start while hovered
+    fadeDuration: 420,        // ms for the poster to cross-fade to the video
+    preloadMargin: '600px 0px', // fetch video metadata this far before it scrolls in
+    soundBadge: true,         // show "sound off - click to enable" when autoplay is blocked
+    pauseOnScrollAway: true,  // pause if the tile scrolls out of the viewport
+  },
+
   /* ---- image lightbox ---- */
   lightbox: {
     enabled: true,             // click any project image to zoom in

@@ -293,6 +293,226 @@
     return h;
   }
 
+  /* ---------------------------------------------------------------- *
+   * The "videogrid" module — six tiles that play their own video while
+   * the cursor is on them, and only then.
+   *
+   * Nothing autoplays: every <video> is built with no `src` and
+   * preload="none", so a page load transfers zero video bytes. An
+   * IntersectionObserver attaches the source as `preload="metadata"`
+   * roughly 600px before the module arrives so hovering feels instant.
+   * Sound is always attempted first and only dropped to muted when the
+   * browser's autoplay policy refuses — in which case the tile grows a
+   * small "sound off" badge until the first real user gesture.
+   * ---------------------------------------------------------------- */
+  function videoTile(t, i, g) {
+    var ratio = (t.ratio === '9:16') ? '9:16' : '16:9';
+    var box = document.createElement('div');
+    box.className = 'vgtile';
+    box.dataset.ratio = ratio;
+    box.dataset.index = String(i);
+    box.tabIndex = 0;
+    box.setAttribute('role', 'button');
+    box.setAttribute('aria-label', 'Play: ' + (t.title || ('video ' + (i + 1))));
+
+    var video = null;
+    if (g.enabled !== false) {
+      video = document.createElement('video');
+      video.className = 'vgtile__video';
+      video.setAttribute('preload', 'none');   // never "auto"
+      video.setAttribute('playsinline', '');
+      video.setAttribute('aria-hidden', 'true');
+      video.playsInline = true;
+      video.loop = g.loop !== false;
+      video.muted = false;                     // sound on unless policy says no
+      video.dataset.src = t.video;             // no src attribute: 0 bytes
+      box.appendChild(video);
+    }
+
+    // Ratio-correct intrinsic size: the poster can never shift the layout,
+    // whatever file the user points "poster" at later.
+    var dims = (ratio === '9:16') ? [720, 1280] : [1280, 720];
+    var img = document.createElement('img');
+    img.className = 'vgtile__poster';
+    img.src = t.poster;
+    img.alt = t.alt || '';
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.width = dims[0];
+    img.height = dims[1];
+    img.setAttribute('draggable', 'false');
+    box.appendChild(img);
+
+    var badge = document.createElement('span');
+    badge.className = 'vgtile__badge';
+    badge.textContent = 'sound off - click to enable';
+    badge.setAttribute('aria-hidden', 'true');
+    box.appendChild(badge);
+
+    return { el: box, video: video, img: img, badge: badge, src: t.video, loaded: false };
+  }
+
+  function wireVideoGrid(root, tiles, g) {
+    if (g.enabled === false || !tiles.length) return;
+
+    var active = null;         // at most one tile may be playing
+    var activated = false;     // becomes true on the first gesture anywhere
+    var canHover = !!(window.matchMedia &&
+      window.matchMedia('(hover: hover) and (pointer: fine)').matches);
+
+    function tileAt(el) {
+      var i = parseInt(el && el.dataset ? el.dataset.index : '-1', 10);
+      return isNaN(i) ? null : (tiles[i] || null);
+    }
+
+    function showBadge(t) { if (g.soundBadge !== false) t.el.classList.add('is-muted'); }
+    function hideBadge(t) { t.el.classList.remove('is-muted'); }
+
+    // First contact with the network, and only once the module is near.
+    function ensureLoaded(t) {
+      if (t.loaded || !t.video || t.video.src) return;
+      t.loaded = true;
+      t.video.preload = 'metadata';
+      t.video.src = t.src;
+      t.video.load();
+    }
+
+    function play(t) {
+      ensureLoaded(t);
+      var v = t.video;
+      v.muted = false;                      // spec: always try audible first
+      var p = v.play();
+      if (p && typeof p.then === 'function') {
+        p.then(function () { hideBadge(t); }).catch(function (err) {
+          if (!err || err.name !== 'NotAllowedError') return;
+          // Autoplay policy — audible play needs a gesture that already
+          // happened. Fall back to muted so the tile still comes alive.
+          v.muted = true;
+          showBadge(t);
+          var q = v.play();
+          if (q && typeof q.catch === 'function') q.catch(function () {});
+        });
+      } else {
+        hideBadge(t);
+      }
+    }
+
+    function stop(t, rewind) {
+      if (!t || !t.video) return;
+      t.video.pause();
+      if (rewind) { try { t.video.currentTime = 0; } catch (e) {} }
+      t.el.classList.remove('is-playing');
+      if (active === t) active = null;
+    }
+
+    function start(t) {
+      if (active && active !== t) stop(active, true);   // always reset the other one
+      active = t;
+      play(t);
+    }
+
+    function toggle(t) {
+      if (active === t && t.video && !t.video.paused) stop(t, g.rewindOnLeave !== false);
+      else start(t);
+    }
+
+    var rewindOnLeave = function () { return g.rewindOnLeave !== false; };
+
+    tiles.forEach(function (t) {
+      if (t.video) {
+        // Poster only cross-fades out once frames are really flowing,
+        // so there is never a black flash.
+        t.video.addEventListener('playing', function () {
+          if (active === t) t.el.classList.add('is-playing');
+        });
+        t.video.addEventListener('error', function () { stop(t, false); });
+      }
+
+      if (canHover) {
+        t.el.addEventListener('pointerenter', function () { start(t); });
+        t.el.addEventListener('pointerleave', function () {
+          if (active === t) stop(t, rewindOnLeave());
+        });
+      } else {
+        // Touch: first tap plays with sound, second pauses.
+        t.el.addEventListener('click', function (e) { e.preventDefault(); toggle(t); });
+      }
+
+      t.el.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+          e.preventDefault();
+          toggle(t);
+        }
+      });
+    });
+
+    // First click / tap / key anywhere unlocks sound for good.
+    function onActivate() {
+      if (activated) return;
+      activated = true;
+      tiles.forEach(function (t) {
+        hideBadge(t);
+        if (active === t && t.video && t.video.muted && !t.video.paused) t.video.muted = false;
+      });
+    }
+    ['pointerdown', 'keydown', 'click'].forEach(function (type) {
+      document.addEventListener(type, onActivate, true);
+    });
+
+    if ('IntersectionObserver' in window) {
+      // Metadata only, this far ahead of the viewport. Never "auto".
+      var pre = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          var t = tileAt(en.target);
+          if (t) ensureLoaded(t);
+          pre.unobserve(en.target);
+        });
+      }, { rootMargin: g.preloadMargin || '600px 0px' });
+      tiles.forEach(function (t) { pre.observe(t.el); });
+
+      if (g.pauseOnScrollAway !== false) {
+        var away = new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) {
+            if (en.isIntersecting) return;
+            var t = tileAt(en.target);
+            if (t && active === t) stop(t, rewindOnLeave());
+          });
+        }, { threshold: 0 });
+        tiles.forEach(function (t) { away.observe(t.el); });
+      }
+    }
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden && active) stop(active, rewindOnLeave());
+    });
+  }
+
+  function renderVideoGrid(m) {
+    var g = S.videoGrid || {};
+    var root = document.createElement('div');
+    root.className = 'vgrid';
+
+    if (g.fadeDuration != null) root.style.setProperty('--vg-fade', g.fadeDuration + 'ms');
+
+    var top = document.createElement('div');
+    top.className = 'vgrid__top';
+    var bottom = document.createElement('div');
+    bottom.className = 'vgrid__bottom';
+
+    var tiles = [];
+    (m.tiles || []).forEach(function (t, i) {
+      var tile = videoTile(t, i, g);
+      tiles.push(tile);
+      (i < 4 ? top : bottom).appendChild(tile.el);
+    });
+
+    root.appendChild(top);
+    root.appendChild(bottom);
+    wireVideoGrid(root, tiles, g);
+    return wrap(m, root);
+  }
+
   /* Common wrapper: reveal state + optional caption. */
   function wrap(m, node) {
     var sec = document.createElement('section');
@@ -315,6 +535,7 @@
     video: renderVideo,
     embed: renderEmbed,
     about: renderAbout,
+    videogrid: renderVideoGrid,
   };
 
   /* ---------------------------------------------------------------- *

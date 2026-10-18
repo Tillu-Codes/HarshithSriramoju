@@ -116,14 +116,43 @@ const CONTENT = {
       "caption": "",
       "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 7"
     },
+    /* --------------------------------------------------------------
+     *  MODULE 8 — "LOGOS & MARKS", rebuilt as a LIVE VIDEO GRID.
+     *  It used to be a single flat GIF (assets/pics&gifs/8.gif, which
+     *  is still on disk, just no longer referenced). Now it is six
+     *  tiles in a bento shape and each tile plays its video while the
+     *  cursor is on it. Nothing plays on its own.
+     *
+     *  You only edit the six entries below: file names, titles, alt
+     *  text. The shape of the grid (gaps, ratios, padding, which tile
+     *  sits where) lives entirely in css/styles.css under `.vgrid`.
+     *
+     *  "ratio" is "9:16" (tall) or "16:9" (wide) and must stay as
+     *  shown below — tiles 1 and 3 tall, 2/4/5/6 wide — otherwise the
+     *  top and bottom edges of the bento stop lining up.
+     *
+     *  "poster" points at the small optimised WebP in
+     *  assets/thumbnails/optimized/. The originals are untouched in
+     *  assets/thumbnails/. Point "poster" back at an original any time
+     *  (it will just be heavier).
+     *
+     *  To reorder, move a whole object — the tiles fill the bento in
+     *  array order 1 to 6.
+     * -------------------------------------------------------------- */
     {
       "n": 8,
-      "type": "image",
-      "src": "assets/pics&gifs/8.gif",
+      "type": "videogrid",
       "w": 1400,
-      "h": 788,
-      "caption": "",
-      "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 8"
+      "h": 1112,
+
+      "tiles": [
+        { "title": "Short-form edit",   "ratio": "9:16", "video": "assets/videos/shortformvid.MP4", "poster": "assets/thumbnails/optimized/shortformimg.webp", "alt": "Short-form video editing showreel" },
+        { "title": "SaaS promo",        "ratio": "16:9", "video": "assets/videos/saasvid.MP4",      "poster": "assets/thumbnails/optimized/saasimg.webp",      "alt": "SaaS product promo video" },
+        { "title": "Viral edit",        "ratio": "9:16", "video": "assets/videos/viralvid.MP4",     "poster": "assets/thumbnails/optimized/viralimg.webp",     "alt": "Viral vertical video edit" },
+        { "title": "Motion graphics",   "ratio": "16:9", "video": "assets/videos/motionvid.MP4",    "poster": "assets/thumbnails/optimized/motionimg.webp",    "alt": "Motion graphics piece" },
+        { "title": "VFX work",          "ratio": "16:9", "video": "assets/videos/vfxvid.mp4",       "poster": "assets/thumbnails/optimized/vfximg.webp",       "alt": "Visual effects breakdown" },
+        { "title": "Jaaz edits",        "ratio": "16:9", "video": "assets/videos/jaazvid.MP4",      "poster": "assets/thumbnails/optimized/jaazimg.webp",       "alt": "Jaaz video editing showreel" }
+      ]
     },
     {
       "n": 9,

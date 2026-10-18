@@ -28,9 +28,15 @@
 <script src="settings.js"></script>
 <script src="content.js"></script>
 <script>
-  /* static screenshot only: no reveal animation, just module 2 */
+  /* render ONE module on its own at full canvas size.
+     pick it with the hash: preview.html#videogrid  |  #about  |  #8   */
+  var want = (location.hash || '#videogrid').slice(1).toLowerCase();
+  var mod = CONTENT.modules.filter(function (m) {
+    return m.type === want || String(m.n) === want;
+  })[0] || CONTENT.modules.filter(function (m) { return m.type === 'videogrid'; })[0];
   SETTINGS.reveal.enabled = false;
-  CONTENT.modules = [CONTENT.modules.find(function (m) { return m.type === 'about'; })];
+  CONTENT.modules = [mod];
+  document.title = 'preview: ' + (mod ? mod.type + ' / n=' + mod.n : 'none');
 </script>
 <script src="js/app.js"></script>
 </body>
