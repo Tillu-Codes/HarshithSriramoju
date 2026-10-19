@@ -1,0 +1,7 @@
+# Scratch workspace from the portrait-rebuild (1.5 GB of frame dumps + diagnostics)
+_work/
+
+# Original assets being replaced - kept locally as a safety net, never publish
+_backup_originals/
+
+__pycache__/
