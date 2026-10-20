@@ -158,33 +158,6 @@ const CONTENT = {
       ]
     },
     {
-      "n": 9,
-      "type": "image",
-      "src": "assets/pics&gifs/9.gif",
-      "w": 1400,
-      "h": 55,
-      "caption": "",
-      "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 9"
-    },
-    {
-      "n": 10,
-      "type": "image",
-      "src": "assets/pics&gifs/10.png",
-      "w": 1400,
-      "h": 973,
-      "caption": "",
-      "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 10"
-    },
-    {
-      "n": 11,
-      "type": "image",
-      "src": "assets/pics&gifs/11.gif",
-      "w": 1400,
-      "h": 55,
-      "caption": "",
-      "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 11"
-    },
-    {
       "n": 12,
       "type": "image",
       "src": "assets/pics&gifs/12.gif",
