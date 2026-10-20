@@ -69,7 +69,10 @@ const CONTENT = {
 
       /* Torn-paper footer sliced from the original slide — paper, red
          shape and portrait. Swap this file to change the artwork. */
-      "edge": "assets/about-edge.png"
+      "edge": "assets/about-edge.png",
+
+      /* Looping 3D clip that plays inside the empty selection frame. */
+      "fig": "assets/pics&gifs/3dfig.mp4"
     },
     {
       "n": 3,

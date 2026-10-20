@@ -4,4 +4,18 @@ _work/
 # Original assets being replaced - kept locally as a safety net, never publish
 _backup_originals/
 
+# Python bytecode from the probing/asset tooling
 __pycache__/
+*.py[cod]
+
+# OS junk
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Editor / IDE scratch
+*~
+*.swp
+*.swo
+.idea/
+.vscode/

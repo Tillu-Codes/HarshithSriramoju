@@ -206,6 +206,59 @@
     return tile;
   }
 
+  /* ---------------------------------------------------------------- *
+   * The looping 3D clip pinned inside the empty selection frame.
+   * One <video>, no JS animation — the browser owns the loop, so it is
+   * built once with the module and never reloads or restarts on scroll.
+   * Reduced motion gets no autoplay: the source is pulled just far
+   * enough to paint frame 0 and then holds still.
+   *
+   * The clip is shot on a black plate. This filter turns that plate into
+   * real alpha so the figure stands on the slide's own grid: luminance
+   * becomes alpha, then a knee at 6/255 clears it — the plate measures
+   * <=2 across the whole background while the figure (hair included)
+   * stays above that. Built once, shared by every frame.
+   * ---------------------------------------------------------------- */
+  var FIG_FILTER = 'fig-key';
+  function figFilter() {
+    if (document.getElementById(FIG_FILTER)) return;
+    var host = document.createElement('div');
+    host.innerHTML =
+      '<svg width="0" height="0" aria-hidden="true" ' +
+        'style="position:absolute;width:0;height:0;overflow:hidden">' +
+      '<filter id="' + FIG_FILTER + '" color-interpolation-filters="sRGB">' +
+        '<feColorMatrix type="matrix" ' +
+          'values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 .2126 .7152 .0722 0 0"/>' +
+        '<feComponentTransfer>' +
+          '<feFuncA type="linear" slope="60" intercept="-1.4118"/>' +
+        '</feComponentTransfer>' +
+      '</filter></svg>';
+    document.body.appendChild(host.firstChild);
+  }
+
+  function renderFig(src) {
+    figFilter();
+    var v = document.createElement('video');
+    v.className = 'about__figvid';
+    v.loop = true;
+    v.defaultMuted = true;          // `muted` content attribute
+    v.muted = true;                 // state the autoplay policy checks
+    v.playsInline = true;
+    v.setAttribute('aria-label', 'Looping 3D animation of Harshith Sriramoju');
+    v.preload = 'metadata';
+    if (reduceMotion) {
+      v.preload = 'auto';           // fetch frame 0 so the box is not blank
+    } else {
+      v.autoplay = true;
+    }
+    v.src = src;                    // last: every flag is in place before
+                                    // resource selection kicks off
+    var box = document.createElement('div');
+    box.className = 'about__fig';
+    box.appendChild(v);
+    return box;
+  }
+
   function renderAbout(m) {
     var root = document.createElement('div');
     root.className = 'about';
@@ -220,6 +273,8 @@
     if (intro.lead) left.appendChild(textEl('p', 'about__lead', intro.lead));
     if (intro.body) left.appendChild(textEl('p', 'about__body', intro.body));
     root.appendChild(left);
+
+    if (m.fig) root.appendChild(renderFig(m.fig));
 
     if (m.education && m.education.entries && m.education.entries.length) {
       var edu = document.createElement('div');
