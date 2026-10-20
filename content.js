@@ -95,7 +95,7 @@ const CONTENT = {
     {
       "n": 5,
       "type": "image",
-      "src": "assets/pics&gifs/5.gif",
+      "src": "assets/pics&gifs/new5.gif",
       "w": 1400,
       "h": 55,
       "caption": "",
@@ -104,16 +104,16 @@ const CONTENT = {
     {
       "n": 6,
       "type": "image",
-      "src": "assets/pics&gifs/6.png",
-      "w": 1400,
-      "h": 973,
+      "src": "assets/pics&gifs/new6.png",
+      "w": 1672,
+      "h": 941,
       "caption": "",
       "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 6"
     },
     {
       "n": 7,
       "type": "image",
-      "src": "assets/pics&gifs/7.gif",
+      "src": "assets/pics&gifs/new7.gif",
       "w": 1400,
       "h": 55,
       "caption": "",
@@ -192,42 +192,6 @@ const CONTENT = {
       "h": 788,
       "caption": "",
       "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 15"
-    },
-    {
-      "n": 16,
-      "type": "image",
-      "src": "assets/pics&gifs/16.gif",
-      "w": 1400,
-      "h": 55,
-      "caption": "",
-      "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 16"
-    },
-    {
-      "n": 17,
-      "type": "image",
-      "src": "assets/pics&gifs/17.png",
-      "w": 1400,
-      "h": 973,
-      "caption": "",
-      "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 17"
-    },
-    {
-      "n": 18,
-      "type": "image",
-      "src": "assets/pics&gifs/18.gif",
-      "w": 1400,
-      "h": 55,
-      "caption": "",
-      "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 18"
-    },
-    {
-      "n": 19,
-      "type": "image",
-      "src": "assets/pics&gifs/19.png",
-      "w": 1400,
-      "h": 1704,
-      "caption": "",
-      "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 19"
     },
     {
       "n": 20,
