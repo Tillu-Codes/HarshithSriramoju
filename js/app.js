@@ -584,6 +584,78 @@
     return sec;
   }
 
+  /* ---------------------------------------------------------------- *
+   * Closing slide. The GRACIAS plate stays raster art — its display
+   * type is a bespoke condensed face a web font cannot reproduce — but
+   * the header and the contact row are live HTML laid over it, so the
+   * links are real anchors and the text stays selectable.
+   * ---------------------------------------------------------------- */
+  var ICONS = {
+    phone: '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+           '<path class="solid" d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24 11.36 11.36 0 0 0 3.57.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1.02l-2.2 2.2Z"/></svg>',
+    mail:   '<svg viewBox="0 0 26 18" aria-hidden="true">' +
+            '<rect x="1" y="1" width="24" height="16" rx="1.4"/>' +
+            '<path d="m1.7 1.9 11.3 8.3 11.3-8.3"/></svg>',
+    ig:     '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+            '<rect x="2.5" y="2.5" width="19" height="19" rx="5.4"/>' +
+            '<circle cx="12" cy="12" r="4.5"/>' +
+            '<circle class="dot" cx="17.5" cy="6.5" r="1.2"/></svg>',
+    li:     '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+            '<rect x="2.5" y="2.5" width="19" height="19" rx="5.4"/>' +
+            '<circle class="dot" cx="7.5" cy="7.9" r="1.2"/>' +
+            '<path d="M7.5 11.2v5.6"/>' +
+            '<path d="M11.6 16.8v-5.6m0 1.9c.42-1.28 1.5-2.1 2.8-2.1 1.7 0 2.7 1.15 2.7 3.05v2.75"/></svg>'
+  };
+
+  function renderThanks(m) {
+    var root = document.createElement('div');
+    root.className = 'thanks';
+
+    var pic = document.createElement('img');
+    pic.className = 'thanks__img';
+    pic.alt = m.alt || '';
+    pic.decoding = 'async';
+    pic.dataset.cdn = m.src;
+    pic.src = m.src;
+    if (S.media && S.media.preferLocal) {
+      var probe = new Image();
+      probe.onload = function () { pic.src = probe.src; };
+      probe.src = localPath(m.src);
+    }
+    root.appendChild(pic);
+
+    var hd = document.createElement('p');
+    hd.className = 'thanks__hd';
+    hd.textContent = m.portfolio || '';
+    root.appendChild(hd);
+
+    var row = document.createElement('nav');
+    row.className = 'thanks__row';
+    row.setAttribute('aria-label', 'Contact');
+    (m.contacts || []).forEach(function (c) {
+      var a = document.createElement('a');
+      a.className = 'thanks__item';
+      a.href = c.href;
+      if (/^https?:/i.test(c.href)) { a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+
+      var ic = document.createElement('span');
+      ic.className = 'thanks__ico';
+      ic.classList.add('thanks__ico--' + c.kind);
+      ic.innerHTML = ICONS[c.kind] || '';
+      a.appendChild(ic);
+
+      var t = document.createElement('span');
+      t.className = 'thanks__txt';
+      t.textContent = c.label;
+      a.appendChild(t);
+
+      row.appendChild(a);
+    });
+    root.appendChild(row);
+
+    return wrap(m, root);
+  }
+
   var RENDER = {
     image: renderImage,
     collection: renderCollection,
@@ -591,6 +663,7 @@
     embed: renderEmbed,
     about: renderAbout,
     videogrid: renderVideoGrid,
+    thanks: renderThanks,
   };
 
   /* ---------------------------------------------------------------- *

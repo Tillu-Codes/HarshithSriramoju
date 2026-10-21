@@ -195,12 +195,19 @@ const CONTENT = {
     },
     {
       "n": 20,
-      "type": "image",
+      "type": "thanks",
       "src": "assets/pics&gifs/20.png",
       "w": 1400,
       "h": 788,
-      "caption": "",
-      "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 20"
+      "portfolio": "PORTFOLIO OF HARSHITH SRIRAMOJU",
+      "year": "2026",
+      "alt": "GRACIAS — thank you for viewing",
+      "contacts": [
+        { "kind": "phone", "label": "+91 832 - 827 - 5189",       "href": "tel:+918328275189" },
+        { "kind": "mail",  "label": "sahxoharshith@gmail.com",    "href": "mailto:sahxoharshith@gmail.com" },
+        { "kind": "ig",    "label": "@sahxo_edits",               "href": "https://www.instagram.com/sahxo_edits?xtok=Y3VibXc5cDI1OHg2" },
+        { "kind": "li",    "label": "Harshith Sriramoju",         "href": "https://www.linkedin.com/in/harshith-sriramoju-b78143387?utm_source=share_via&utm_content=profile&utm_medium=member_android" }
+      ]
     }
   ]
 };
