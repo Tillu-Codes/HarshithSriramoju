@@ -1,5 +1,12 @@
-# Scratch workspace from the portrait-rebuild (1.5 GB of frame dumps + diagnostics)
+# Scratch workspaces - probing harnesses, frame dumps, diagnostics.
+# _work/ was the portrait rebuild (1.5 GB of frame dumps);
+# _tmp/ is the current one (asset probes, screenshots, verification runs).
 _work/
+_tmp/
+
+# Transient headless-browser harness pages dropped at the repo root while
+# probing index.html - these reference _tmp/ and must never be committed.
+_probe.html
 
 # Original assets being replaced - kept locally as a safety net, never publish
 _backup_originals/

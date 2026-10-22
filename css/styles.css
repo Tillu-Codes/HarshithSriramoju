@@ -545,6 +545,84 @@ button{ font:inherit; color:inherit; border:0; background:none; cursor:pointer }
 }
 .vgtile.is-muted .vgtile__badge{ opacity:1; visibility:visible }
 
+/* --- page 4: the showreel clip ------------------------------------ *
+   A 16:9 box locked with padding-bottom, so the frame cannot collapse
+   while the poster decodes and no swap of either file shifts the page.
+   The clip is exactly 16:9, so it fills the box untouched — no re-
+   encode, no resample, sound and clarity exactly as delivered.
+   The card art is 1.92:1 rather than 16:9, so it is fitted, not
+   cropped: the captions that sit within ~40px of its edges would
+   otherwise be trimmed off. Its own background is black, so the fitted
+   letterbox reads as part of the card. */
+.module[data-type="clip"]{ container-type:inline-size }
+
+.clip{
+  --u:1px;
+  --clip-fade:420ms;
+  position:relative;
+  display:block;
+  width:100%;
+  height:0;
+  padding-bottom:56.2857%;          /* 788 / 1400 = 16:9 */
+  overflow:hidden;
+  background:#000;
+  cursor:pointer;
+  outline-offset:3px;
+  -webkit-tap-highlight-color:transparent;
+
+  .clip{ --u:calc(100cqw / 1400) }
+}
+.clip:focus-visible{
+  outline:calc(2 * var(--u)) solid #fff;
+}
+
+.clip__video,
+.clip__poster{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+}
+.clip__video{
+  z-index:1;
+  object-fit:cover;                 /* 16:9 into 16:9 — no crop, no letterbox */
+  background:#000;
+}
+.clip__poster{
+  z-index:2;
+  margin:0;
+  object-fit:contain;               /* fitted, so no edge caption is trimmed */
+  background:#000;
+  opacity:1;
+  transition:opacity var(--clip-fade) ease;
+  pointer-events:none;
+  user-select:none;
+}
+.clip.is-playing .clip__poster{ opacity:0 }
+
+/* --- "sound off" chip, only while autoplay was refused ------------- */
+.clip__badge{
+  position:absolute;
+  z-index:3;
+  left:calc(10 * var(--u));
+  bottom:calc(10 * var(--u));
+  padding:calc(5 * var(--u)) calc(11 * var(--u));
+  border-radius:999px;
+  background:rgba(0,0,0,.74);
+  color:#fff;
+  font-family:Helvetica,Arial,sans-serif;
+  font-size:calc(11 * var(--u));
+  line-height:1.35;
+  letter-spacing:.01em;
+  white-space:nowrap;
+  opacity:0;
+  visibility:hidden;
+  transition:opacity .2s ease, visibility .2s ease;
+  pointer-events:none;
+}
+.clip.is-muted .clip__badge{ opacity:1; visibility:visible }
+
 /* --------------------------------------------------------- RESPONSIVE */
 @media (max-width:760px){
   /* the slide is a fixed canvas; on phones it becomes a real document */

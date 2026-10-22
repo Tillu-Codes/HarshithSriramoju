@@ -407,7 +407,9 @@
     return { el: box, video: video, img: img, badge: badge, src: t.video, loaded: false };
   }
 
-  function wireVideoGrid(root, tiles, g) {
+  /* Shared hover-to-play wiring: the six-tile grid below and the single
+     showreel module on page 4 are the same mechanism with one list. */
+  function wireHoverPlay(tiles, g) {
     if (g.enabled === false || !tiles.length) return;
 
     var active = null;         // at most one tile may be playing
@@ -564,8 +566,70 @@
 
     root.appendChild(top);
     root.appendChild(bottom);
-    wireVideoGrid(root, tiles, g);
+    wireHoverPlay(tiles, g);
     return wrap(m, root);
+  }
+
+  /* ---------------------------------------------------------------- *
+   * The "clip" module — page 4's showreel.
+   *
+   * A still card that plays its own video while the cursor is on it,
+   * and only then. Same mechanism as the grid above with a single tile:
+   * the <video> is built with no `src` and preload="none", so a page
+   * load transfers zero video bytes, and an IntersectionObserver
+   * attaches the source as preload="metadata" ahead of the viewport so
+   * the first hover is instant rather than a stall.
+   *
+   * The clip is 16:9 but the card is 1.92:1, so the poster is fitted
+   * rather than cropped — the captions sitting near its edges survive
+   * intact. The element deliberately stays out of `.shot` and out of
+   * `zoomables`, so the lightbox and the drift can never fight the
+   * hover for the same pixels.
+   * ---------------------------------------------------------------- */
+  function renderClip(m) {
+    var box = document.createElement('div');
+    box.className = 'clip';
+    // wireHoverPlay resolves a tile from the element it observes by index,
+    // so the box carries its position in the list, exactly as .vgtile does.
+    box.dataset.index = '0';
+    box.tabIndex = 0;
+    box.setAttribute('role', 'button');
+    box.setAttribute('aria-label', 'Play: ' + (m.alt || 'showreel'));
+
+    var v = document.createElement('video');
+    v.className = 'clip__video';
+    v.setAttribute('preload', 'none');        // never "auto"
+    v.setAttribute('playsinline', '');
+    v.setAttribute('aria-hidden', 'true');
+    v.playsInline = true;
+    v.loop = true;
+    v.muted = false;                          // sound on unless policy says no
+    v.dataset.src = m.src;                    // no src attribute: 0 bytes
+    box.appendChild(v);
+
+    // Ratio-correct intrinsic size: the 16:9 box is locked in CSS, so the
+    // poster cannot collapse the frame while it decodes, and pointing
+    // "poster" at any other file later cannot shift the layout.
+    var img = document.createElement('img');
+    img.className = 'clip__poster';
+    img.src = m.poster;
+    img.alt = m.alt || 'Showreel poster';
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.width = 1280;
+    img.height = 720;
+    img.setAttribute('draggable', 'false');
+    box.appendChild(img);
+
+    var badge = document.createElement('span');
+    badge.className = 'clip__badge';
+    badge.textContent = 'sound off - click to enable';
+    badge.setAttribute('aria-hidden', 'true');
+    box.appendChild(badge);
+
+    wireHoverPlay([{ el: box, video: v, img: img, badge: badge,
+                     src: m.src, loaded: false }], S.showreel || {});
+    return wrap(m, box);
   }
 
   /* Common wrapper: reveal state + optional caption. */
@@ -662,6 +726,7 @@
     video: renderVideo,
     embed: renderEmbed,
     about: renderAbout,
+    clip: renderClip,
     videogrid: renderVideoGrid,
     thanks: renderThanks,
   };

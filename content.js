@@ -18,7 +18,7 @@ const CONTENT = {
     {
       "n": 1,
       "type": "image",
-      "src": "assets/pics&gifs/1.gif",
+      "src": "assets/pics&gifs/new1.gif",
       "w": 1400,
       "h": 788,
       "caption": "",
@@ -85,12 +85,28 @@ const CONTENT = {
     },
     {
       "n": 4,
-      "type": "image",
-      "src": "assets/pics&gifs/4.png",
+      /* The showreel. A still card that plays its video while the
+         cursor is on it, and only then. Nothing autoplays and the
+         <video> is built with no src, so a page load transfers zero
+         video bytes.
+
+         "src"   the clip itself, 16:9, shipped untouched (h264 + mp3)
+         "poster" the still shown until the cursor arrives. It points at
+                  the small optimised WebP in assets/thumbnails/ — the
+                  1.8 MB original is 9x heavier for no visible gain.
+                  Point it back at "assets/pics&gifs/showpic.png" any
+                  time; the box is ratio-locked so nothing shifts.
+         The card is 1.92:1 against a 16:9 clip, so the poster is fitted
+         (object-fit:contain) rather than cropped — its edge captions
+         stay whole. */
+      "type": "clip",
+      "src": "assets/pics&gifs/showreel.mp4",
+      "poster": "assets/thumbnails/optimized/showpic.webp",
+      "ratio": "16:9",
       "w": 1400,
-      "h": 656,
+      "h": 788,
       "caption": "",
-      "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 4"
+      "alt": "MY SHOWREEL — video editing and cinematography"
     },
     {
       "n": 5,
@@ -169,9 +185,9 @@ const CONTENT = {
     {
       "n": 13,
       "type": "image",
-      "src": "assets/pics&gifs/13.png",
-      "w": 1400,
-      "h": 973,
+      "src": "assets/pics&gifs/new13.png",
+      "w": 1505,
+      "h": 1045,
       "caption": "",
       "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 13"
     },

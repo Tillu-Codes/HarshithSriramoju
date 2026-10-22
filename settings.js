@@ -54,6 +54,19 @@ const SETTINGS = {
     pauseOnScrollAway: true,  // pause if the tile scrolls out of the viewport
   },
 
+  /* ---- page 4: the showreel clip ----
+     Same hover-to-play mechanism as the grid above, but it is its own
+     switch: turning the bento grid off must not mute the showreel. */
+  showreel: {
+    enabled: true,             // false = poster only, nothing wired up
+    rewindOnLeave: true,       // pause + jump back to 0 when the cursor leaves
+    loop: true,                // keep playing from the start while hovered
+    fadeDuration: 420,         // ms for the poster to cross-fade to the video
+    preloadMargin: '600px 0px', // fetch video metadata this far before it scrolls in
+    soundBadge: true,          // show "sound off - click to enable" when autoplay is blocked
+    pauseOnScrollAway: true,   // pause if the clip scrolls out of the viewport
+  },
+
   /* ---- image lightbox ---- */
   lightbox: {
     enabled: true,             // click any project image to zoom in
