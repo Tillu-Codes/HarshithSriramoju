@@ -168,7 +168,7 @@ const CONTENT = {
         { "title": "Short-form edit",   "ratio": "9:16", "video": "assets/videos/shortformvid.MP4", "poster": "assets/thumbnails/optimized/shortformimg.webp", "alt": "Short-form video editing showreel" },
         { "title": "SaaS promo",        "ratio": "16:9", "video": "assets/videos/saasvid.MP4",      "poster": "assets/thumbnails/optimized/saasimg.webp",      "alt": "SaaS product promo video" },
         { "title": "Viral edit",        "ratio": "9:16", "video": "assets/videos/viralvid.MP4",     "poster": "assets/thumbnails/optimized/viralimg.webp",     "alt": "Viral vertical video edit" },
-        { "title": "Motion graphics",   "ratio": "16:9", "video": "assets/videos/motionvid.MP4",    "poster": "assets/thumbnails/optimized/motionimg.webp",    "alt": "Motion graphics piece" },
+        { "title": "Motion graphics",   "ratio": "16:9", "video": "assets/videos/motionvidnew.MP4",    "poster": "assets/thumbnails/optimized/motionimg.webp",    "alt": "Motion graphics piece" },
         { "title": "VFX work",          "ratio": "16:9", "video": "assets/videos/vfxvid.mp4",       "poster": "assets/thumbnails/optimized/vfximg.webp",       "alt": "Visual effects breakdown" },
         { "title": "Jaaz edits",        "ratio": "16:9", "video": "assets/videos/jaazvid.MP4",      "poster": "assets/thumbnails/optimized/jaazimg.webp",       "alt": "Jaaz video editing showreel" }
       ]
@@ -203,7 +203,7 @@ const CONTENT = {
     {
       "n": 15,
       "type": "image",
-      "src": "assets/pics&gifs/15.gif",
+      "src": "assets/pics&gifs/new15.gif",
       "w": 1400,
       "h": 788,
       "caption": "",

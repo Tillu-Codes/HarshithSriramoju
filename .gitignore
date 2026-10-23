@@ -8,6 +8,13 @@ _tmp/
 # probing index.html - these reference _tmp/ and must never be committed.
 _probe.html
 
+# One-off asset-generation harnesses. Both pull source frames from outside the
+# repo (C:/Users/sriav/Downloads/c1..6.png) and render into _tmp/, so they are
+# not portable and are not part of the shipped site. Their OUTPUT belongs in
+# assets/, their generators stay local.
+tools/create-content-visibility-gif.mjs
+tools/render-content-visibility-gif.py
+
 # Original assets being replaced - kept locally as a safety net, never publish
 _backup_originals/
 
