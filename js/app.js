@@ -28,34 +28,74 @@
     return dir + '/' + file;
   }
 
-  /* Build a <div class="shot"> wrapper around an <img>. */
-  function shot(src, w, h, alt) {
+  /* Is this src one of the motion pages (they ship as MP4 rather than GIF)? */
+  function isMotion(src) {
+    return /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(src || '');
+  }
+
+  /* Build a <div class="shot"> wrapper around an <img> (still page) or a
+     <video> (motion page).
+     `priority` is 'high' for the first (above-the-fold) asset, 'low' for
+     everything else, so the browser's limited connection slots go to what
+     the user is actually looking at first. Returns { box, media }. */
+  function shot(src, w, h, alt, priority) {
     var box = document.createElement('div');
     box.className = 'shot';
 
-    var img = document.createElement('img');
-    img.alt = alt || '';
-    img.loading = (S.lazy && S.lazy.enabled) ? 'lazy' : 'eager';
-    img.decoding = 'async';
+    var motion = isMotion(src);
+    var media;
+
+    if (motion) {
+      /* MP4 instead of GIF: the frames decode on a background thread rather
+         than the main one, which is what removes the scroll jank. The
+         playback contract is kept identical to the GIF it replaces —
+         muted, looping, inline, moving while on screen — and unlike a GIF
+         it can genuinely be paused when scrolled away (see initMotionPlay).
+         Only the hero is fetched up front; every other page starts at
+         preload="none" so an off-screen module costs zero bytes. */
+      media = document.createElement('video');
+      media.muted = true;
+      media.defaultMuted = true;          // Safari reads this before play()
+      media.loop = true;
+      media.playsInline = true;
+      media.setAttribute('playsinline', '');
+      media.setAttribute('muted', '');
+      media.setAttribute('aria-label', alt || '');
+      // prefers-reduced-motion holds the first frame instead of playing it,
+      // so those pages still need the bytes needed to decode a frame —
+      // "none" would leave them sitting on the placeholder colour forever.
+      media.preload = priority === 'high' || reduceMotion ? 'auto' : 'none';
+      if (priority === 'high' && !reduceMotion) media.autoplay = true;
+    } else {
+      media = document.createElement('img');
+      media.alt = alt || '';
+      media.loading = (S.lazy && S.lazy.enabled) ? 'lazy' : 'eager';
+      media.decoding = 'async';
+    }
+    // fetchpriority is a hint, so it is set as an attribute on both kinds.
+    if (priority) media.setAttribute('fetchpriority', priority);
 
     // Reserve the box so the dark background shows instead of a jump.
     if (w && h) {
       box.style.paddingBottom = (h / w * 100) + '%';
       box.style.height = '0';
-      img.style.position = 'absolute';
-      img.style.inset = '0';
-      img.style.height = '100%';
-      img.style.objectFit = 'cover';
+      media.style.position = 'absolute';
+      media.style.inset = '0';
+      media.style.height = '100%';
+      media.style.objectFit = 'cover';
     }
     if (S.lazy && S.lazy.placeholder) box.style.setProperty('--ph', S.lazy.placeholder);
 
-    img.dataset.cdn = src;
-    img.src = src;
+    media.dataset.cdn = src;
+    // Only the hero carries a src attribute: the rest hold the path in
+    // dataset and are attached by initMotionPlay when they near the
+    // viewport, so loading the page never pulls all eight MP4s at once.
+    if (!motion || priority === 'high') media.src = src;
 
     // If a local file was placed in assets/, prefer it.
-    if (S.media && S.media.preferLocal) {
+    if (!motion && S.media && S.media.preferLocal) {
       var probe = new Image();
-      probe.onload = function () { img.src = probe.src; };
+      probe.onload = function () { media.src = probe.src; };
       probe.src = localPath(src);
     }
 
@@ -64,16 +104,23 @@
       box.classList.add('can-fade');
       if (S.media.fadeInDuration) box.style.setProperty('--fdur', S.media.fadeInDuration + 'ms');
       var mark = function () { box.classList.add('loaded'); };
-      if (img.complete) mark(); else img.addEventListener('load', mark, { once: true });
+      if (motion) {
+        // Fires when the first frame is decodable. Off-screen pages have
+        // not been attached yet, so they keep the placeholder until the
+        // observer starts them — same visible result as native lazy images.
+        if (media.readyState >= 2) mark();
+        else media.addEventListener('loadeddata', mark, { once: true });
+      } else if (media.complete) mark();
+      else media.addEventListener('load', mark, { once: true });
     }
 
     if (S.media && S.media.clickable) {
       box.classList.add('can-zoom');
-      box.addEventListener('click', function () { openLightbox(img); });
+      box.addEventListener('click', function () { openLightbox(media); });
     }
 
-    box.appendChild(img);
-    return { box: box, img: img };
+    box.appendChild(media);
+    return { box: box, media: media };
   }
 
   /* ---------------------------------------------------------------- *
@@ -82,8 +129,12 @@
   var zoomables = [];   // images eligible for the lightbox, in DOM order
 
   function renderImage(m) {
-    var el = shot(m.src, m.w, m.h, m.alt || m.caption || 'Project image ' + m.n);
-    zoomables.push(el.img);
+    // The first image in the stream is what the visitor actually sees on
+    // arrival, so it gets first claim on the connection; everything after
+    // it yields (fetchpriority=low) because it is lazy-loaded anyway.
+    var priority = zoomables.length === 0 ? 'high' : 'low';
+    var el = shot(m.src, m.w, m.h, m.alt || m.caption || 'Project image ' + m.n, priority);
+    zoomables.push(el.media);
     return wrap(m, el.box);
   }
 
@@ -100,11 +151,11 @@
         el.box.style.flexBasis = '0';
         el.box.style.paddingBottom = (cell.h / cell.w * 100) + '%';
         el.box.style.height = '0';
-        el.img.style.position = 'absolute';
-        el.img.style.inset = '0';
-        el.img.style.height = '100%';
-        el.img.style.objectFit = 'cover';
-        zoomables.push(el.img);
+        el.media.style.position = 'absolute';
+        el.media.style.inset = '0';
+        el.media.style.height = '100%';
+        el.media.style.objectFit = 'cover';
+        zoomables.push(el.media);
         rowEl.appendChild(el.box);
       });
       frag.appendChild(rowEl);
@@ -142,211 +193,6 @@
     return wrap(m, el);
   }
 
-  /* ---------------------------------------------------------------- *
-   * The "about" slide — live HTML in place of the old 2.gif, so the
-   * intro, experience, education and skills are all editable text.
-   * ---------------------------------------------------------------- */
-  function textEl(tag, cls, text) {
-    var n = document.createElement(tag);
-    n.className = cls;
-    n.textContent = text;
-    return n;
-  }
-
-  // Positions of the selection handles, in slide pixels, relative to the
-  // frame box. The bottom three are baked into about-edge.png already.
-  var HANDLES = [[-8, -6], [125, -6], [260, -6], [-8, 304], [260, 304]];
-
-  function frameDecoration() {
-    var f = document.createElement('div');
-    f.className = 'about__frame';
-    f.setAttribute('aria-hidden', 'true');
-    HANDLES.forEach(function (p) {
-      var h = document.createElement('i');
-      h.className = 'about__hnd';
-      h.style.left = 'calc(' + p[0] + ' * var(--u))';
-      h.style.top = 'calc(' + p[1] + ' * var(--u))';
-      f.appendChild(h);
-    });
-    return f;
-  }
-
-  // Adobe-style tile: dark rounded square + two-letter mark.
-  // The mark comes from `key` (ps/ai/ae/pr…), not from the name.
-  function skillTile(item) {
-    var key = item.key || 'sk';
-    var mark = (item.key ? item.key.charAt(0).toUpperCase() + item.key.slice(1)
-                         : (item.name || '').slice(0, 2));
-    var tile = document.createElement('span');
-    tile.className = 'sk sk--' + key;
-    tile.setAttribute('title', item.name || key);
-
-    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 48 48');
-    svg.setAttribute('class', 'sk__svg');
-    svg.setAttribute('role', 'img');
-    svg.setAttribute('aria-label', item.name || key);
-
-    var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    rect.setAttribute('x', '0'); rect.setAttribute('y', '0');
-    rect.setAttribute('width', '48'); rect.setAttribute('height', '48');
-    rect.setAttribute('rx', '10');
-    rect.setAttribute('class', 'sk__plate');
-    svg.appendChild(rect);
-
-    var t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    t.setAttribute('x', '24'); t.setAttribute('y', '25');
-    t.setAttribute('text-anchor', 'middle');
-    t.setAttribute('dominant-baseline', 'middle');
-    t.setAttribute('class', 'sk__letters');
-    t.textContent = mark;
-    svg.appendChild(t);
-
-    tile.appendChild(svg);
-    return tile;
-  }
-
-  /* ---------------------------------------------------------------- *
-   * The looping 3D clip pinned inside the empty selection frame.
-   * One <video>, no JS animation — the browser owns the loop, so it is
-   * built once with the module and never reloads or restarts on scroll.
-   * Reduced motion gets no autoplay: the source is pulled just far
-   * enough to paint frame 0 and then holds still.
-   *
-   * The clip is shot on a black plate. This filter turns that plate into
-   * real alpha so the figure stands on the slide's own grid: luminance
-   * becomes alpha, then a knee at 6/255 clears it — the plate measures
-   * <=2 across the whole background while the figure (hair included)
-   * stays above that. Built once, shared by every frame.
-   * ---------------------------------------------------------------- */
-  var FIG_FILTER = 'fig-key';
-  function figFilter() {
-    if (document.getElementById(FIG_FILTER)) return;
-    var host = document.createElement('div');
-    host.innerHTML =
-      '<svg width="0" height="0" aria-hidden="true" ' +
-        'style="position:absolute;width:0;height:0;overflow:hidden">' +
-      '<filter id="' + FIG_FILTER + '" color-interpolation-filters="sRGB">' +
-        '<feColorMatrix type="matrix" ' +
-          'values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 .2126 .7152 .0722 0 0"/>' +
-        '<feComponentTransfer>' +
-          '<feFuncA type="linear" slope="60" intercept="-1.4118"/>' +
-        '</feComponentTransfer>' +
-      '</filter></svg>';
-    document.body.appendChild(host.firstChild);
-  }
-
-  function renderFig(src) {
-    figFilter();
-    var v = document.createElement('video');
-    v.className = 'about__figvid';
-    v.loop = true;
-    v.defaultMuted = true;          // `muted` content attribute
-    v.muted = true;                 // state the autoplay policy checks
-    v.playsInline = true;
-    v.setAttribute('aria-label', 'Looping 3D animation of Harshith Sriramoju');
-    v.preload = 'metadata';
-    if (reduceMotion) {
-      v.preload = 'auto';           // fetch frame 0 so the box is not blank
-    } else {
-      v.autoplay = true;
-    }
-    v.src = src;                    // last: every flag is in place before
-                                    // resource selection kicks off
-    var box = document.createElement('div');
-    box.className = 'about__fig';
-    box.appendChild(v);
-    return box;
-  }
-
-  function renderAbout(m) {
-    var root = document.createElement('div');
-    root.className = 'about';
-
-    // --- left: greeting + introduction -----------------------------
-    var left = document.createElement('div');
-    left.className = 'about__left';
-
-    left.appendChild(textEl('h2', 'about__greet', m.greeting || 'HELLO'));
-
-    var intro = m.intro || {};
-    if (intro.lead) left.appendChild(textEl('p', 'about__lead', intro.lead));
-    if (intro.body) left.appendChild(textEl('p', 'about__body', intro.body));
-    root.appendChild(left);
-
-    if (m.fig) root.appendChild(renderFig(m.fig));
-
-    if (m.education && m.education.entries && m.education.entries.length) {
-      var edu = document.createElement('div');
-      edu.className = 'about__edu';
-      edu.appendChild(sectionHeading(m.education.heading || 'EDUCATION', 'about__h'));
-      var eduList = document.createElement('div');
-      eduList.className = 'ab-entries';
-      m.education.entries.forEach(function (e) {
-        var box = document.createElement('div');
-        box.className = 'ab-entry';
-        if (e.degree) box.appendChild(textEl('p', 'entry__strong', e.degree));
-        if (e.school) box.appendChild(textEl('p', 'entry__muted', e.school));
-        eduList.appendChild(box);
-      });
-      edu.appendChild(eduList);
-      root.appendChild(edu);
-    }
-
-    // --- right column: skills + experience -------------------------
-    var right = document.createElement('div');
-    right.className = 'about__right';
-
-    if (m.skills && m.skills.items && m.skills.items.length) {
-      var g1 = document.createElement('div');
-      g1.className = 'ab-group ab-group--skills';
-      g1.appendChild(sectionHeading(m.skills.heading || 'SKILLS', 'about__h'));
-      var grid = document.createElement('div');
-      grid.className = 'skgrid';
-      m.skills.items.forEach(function (item) { grid.appendChild(skillTile(item)); });
-      g1.appendChild(grid);
-      right.appendChild(g1);
-    }
-
-    if (m.experience && m.experience.entries && m.experience.entries.length) {
-      var g2 = document.createElement('div');
-      g2.className = 'ab-group ab-group--xp';
-      g2.appendChild(sectionHeading(m.experience.heading || 'EXPERIENCE', 'about__h'));
-      var xpList = document.createElement('div');
-      xpList.className = 'ab-entries';
-      m.experience.entries.forEach(function (e) {
-        var box = document.createElement('div');
-        box.className = 'ab-entry';
-        if (e.period) box.appendChild(textEl('p', 'entry__period', e.period));
-        if (e.role) box.appendChild(textEl('p', 'entry__strong', e.role));
-        if (e.org) box.appendChild(textEl('p', 'entry__muted', e.org));
-        xpList.appendChild(box);
-      });
-      g2.appendChild(xpList);
-      right.appendChild(g2);
-    }
-    root.appendChild(right);
-
-    // --- torn-paper footer band (paper + red shape + portrait) -----
-    if (m.edge) {
-      var edge = document.createElement('img');
-      edge.className = 'about__edge';
-      edge.src = m.edge;
-      edge.alt = '';
-      edge.setAttribute('aria-hidden', 'true');
-      root.appendChild(edge);
-    }
-
-    root.appendChild(frameDecoration());
-    return wrap(m, root);
-  }
-
-  function sectionHeading(text, cls) {
-    var h = document.createElement('h3');
-    h.className = cls;
-    h.textContent = text;
-    return h;
-  }
 
   /* ---------------------------------------------------------------- *
    * The "videogrid" module — six tiles that play their own video while
@@ -725,7 +571,6 @@
     collection: renderCollection,
     video: renderVideo,
     embed: renderEmbed,
-    about: renderAbout,
     clip: renderClip,
     videogrid: renderVideoGrid,
     thanks: renderThanks,
@@ -786,7 +631,8 @@
         var centre = (r.top + r.height / 2) / vh;
         var prox = 1 - Math.min(Math.abs(centre - 0.5) * 2, 1);
         el.style.setProperty('--ddur', (d.duration || 1400) + 'ms');
-        var img = el.querySelector('img');
+        // Stills are <img>, motion pages are <video>; both drift the same.
+        var img = el.querySelector('img,video');
         if (img && !el.matches(':hover')) {
           img.style.transform = 'scale(' + (1 + prox * (d.amount || 0.06)).toFixed(4) + ')';
         }
@@ -800,29 +646,61 @@
   }
 
   /* ---------------------------------------------------------------- *
-   * Pause GIFs that are off-screen
+   * Motion pages: attach, play and pause as they near the viewport
+   *
+   * The eight animated pages are MP4s now. Only the hero carries a src
+   * when the DOM is built, so this is what attaches the other seven —
+   * meaning a fresh load requests exactly one video no matter how long
+   * the page is. Once attached, playback follows the viewport: a page
+   * in view plays muted/looped exactly as the GIF it replaced did, and a
+   * page out of view is paused outright rather than merely swapped for a
+   * 1px src as the old GIF pause had to do, so it stops decoding too.
    * ---------------------------------------------------------------- */
-  function initGifPause() {
-    if (!(S.gif && S.gif.pauseWhenHidden) || !('IntersectionObserver' in window)) return;
-    var gifs = Array.prototype.filter.call(
-      document.querySelectorAll('.stream img'),
-      function (i) { return /\.gif(\?|$)/i.test(i.dataset.cdn || i.src); }
+  function initMotionPlay() {
+    var vids = Array.prototype.filter.call(
+      document.querySelectorAll('.stream video'),
+      function (v) { return /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(v.dataset.cdn || ''); }
     );
-    if (!gifs.length) return;
+    if (!vids.length) return;
+
+    function start(v) {
+      // Attaching src on demand is what keeps the initial load to one file.
+      if (!v.src && v.dataset.cdn) v.src = v.dataset.cdn;
+      // Under prefers-reduced-motion the frame is decoded and held still:
+      // the page still reads correctly, it simply never moves. The src has
+      // already been attached above, which is what makes that frame exist.
+      if (reduceMotion) return;
+      // play() resolves a promise, and a rejected one would surface in the
+      // console as an unhandled rejection (autoplay policy, race with an
+      // intervening pause()). Both are expected, so swallow them.
+      var p = v.play();
+      if (p && typeof p.catch === 'function') p.catch(function () {});
+    }
+    function stop(v) { if (!v.paused) v.pause(); }
+
+    if (!('IntersectionObserver' in window) || !(S.motion && S.motion.pauseWhenHidden)) {
+      vids.forEach(start);   // degrade to "play everything", never to nothing
+      return;
+    }
 
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
-        var img = e.target;
-        if (e.isIntersecting) {
-          if (img.dataset.frozen === '1') { img.src = img.dataset.cdn; img.dataset.frozen = '0'; }
-        } else if (img.dataset.frozen !== '1') {
-          // Swapping to a 1px data URI effectively halts the animation.
-          img.dataset.frozen = '1';
-          img.removeAttribute('src');
-        }
+        // `seen` records the observer's own verdict so visibilitychange can
+        // resume exactly the pages that were in view, and no others.
+        e.target.dataset.seen = e.isIntersecting ? '1' : '0';
+        if (e.isIntersecting) start(e.target); else stop(e.target);
       });
-    }, { rootMargin: '300px 0px' });
-    gifs.forEach(function (g) { io.observe(g); });
+    }, { rootMargin: '300px 0px' });   // start slightly early, as the GIF pause did
+    vids.forEach(function (v) { io.observe(v); });
+
+    // A background tab decodes nothing on its own; make that explicit, and
+    // resume only the pages the observer still considers in view.
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) { vids.forEach(stop); return; }
+      vids.forEach(function (v) {
+        if (v.dataset.seen === '1') start(v);
+      });
+    });
   }
 
   /* ---------------------------------------------------------------- *
@@ -859,9 +737,9 @@
   /* ---------------------------------------------------------------- *
    * Lightbox
    * ---------------------------------------------------------------- */
-  var lb, lbImg, lbIndex = 0;
+  var lb, lbImg, lbVid, lbIndex = 0;
   function initLightbox() {
-    lb = $('lightbox'); lbImg = $('lbImg');
+    lb = $('lightbox'); lbImg = $('lbImg'); lbVid = $('lbVid');
     if (!(S.lightbox && S.lightbox.enabled)) {
       // Remove zoom affordance entirely.
       Array.prototype.forEach.call(document.querySelectorAll('.shot.can-zoom'), function (el) {
@@ -885,11 +763,40 @@
     }
   }
 
-  function openLightbox(img) {
+  /* Route a zoomable into the slot that can actually render it: stills go
+     to #lbImg, motion pages to #lbVid — an <img> cannot hold an MP4, so
+     the two slots swap rather than share. Only one is ever laid out. */
+  function lbShow(media) {
+    var isVideo = media.tagName === 'VIDEO';
+    if (isVideo) {
+      lbImg.hidden = true;
+      lbImg.removeAttribute('src');      // release the still's decode
+      lbVid.hidden = false;
+      var want = media.currentSrc || media.src || media.dataset.cdn;
+      if (lbVid.getAttribute('src') !== want) lbVid.src = want;
+      var p = lbVid.play();
+      if (p && typeof p.catch === 'function') p.catch(function () {});
+    } else {
+      lbReleaseVideo();
+      lbImg.hidden = false;
+      lbImg.style.transition = 'none';   // a fresh still is not a cross-fade
+      lbImg.style.opacity = '1';
+      lbImg.src = media.currentSrc || media.src || media.dataset.cdn;
+    }
+  }
+  function lbReleaseVideo() {
+    if (!lbVid) return;
+    lbVid.pause();
+    lbVid.hidden = true;
+    lbVid.removeAttribute('src');        // do not keep a second copy alive
+    lbVid.load();
+  }
+
+  function openLightbox(media) {
     if (!lb) return;
-    lbIndex = zoomables.indexOf(img);
+    lbIndex = zoomables.indexOf(media);
     if (lbIndex < 0) return;
-    lbImg.src = img.currentSrc || img.src;
+    lbShow(media);
     lb.hidden = false;
     document.body.style.overflow = 'hidden';
     requestAnimationFrame(function () { lb.classList.add('show'); });
@@ -898,12 +805,16 @@
     if (!lb || lb.hidden) return;
     lb.classList.remove('show');
     document.body.style.overflow = '';
+    lbReleaseVideo();
     setTimeout(function () { lb.hidden = true; }, 320);
   }
   function step(dir) {
     if (!zoomables.length) return;
     lbIndex = (lbIndex + dir + zoomables.length) % zoomables.length;
-    var img = zoomables[lbIndex];
+    var media = zoomables[lbIndex];
+    if (media.tagName === 'VIDEO') { lbShow(media); return; }
+    lbReleaseVideo();   // a still must take the stage back from the video
+    lbImg.hidden = false;
     lbImg.style.opacity = '0';
     var next = new Image();
     next.onload = function () {
@@ -911,7 +822,8 @@
       lbImg.style.transition = 'opacity .22s ease';
       lbImg.style.opacity = '1';
     };
-    next.src = img.currentSrc || img.src;
+    next.onerror = function () { lbImg.style.opacity = '1'; };  // never leave it blank
+    next.src = media.currentSrc || media.src || media.dataset.cdn;
   }
 
   /* ---------------------------------------------------------------- *
@@ -934,7 +846,7 @@
 
     initReveal(sections);
     initDrift();
-    initGifPause();
+    initMotionPlay();
   }
 
   if (document.readyState === 'loading') {

@@ -8,12 +8,17 @@ _tmp/
 # probing index.html - these reference _tmp/ and must never be committed.
 _probe.html
 
-# One-off asset-generation harnesses. Both pull source frames from outside the
-# repo (C:/Users/sriav/Downloads/c1..6.png) and render into _tmp/, so they are
-# not portable and are not part of the shipped site. Their OUTPUT belongs in
-# assets/, their generators stay local.
-tools/create-content-visibility-gif.mjs
-tools/render-content-visibility-gif.py
+# Screenshots taken by tools/*.ps1 and by headless-Chrome verification runs.
+# These are diagnostics, not site content - never commit them.
+tools/render*.png
+tools/preview.png
+*.render.png
+
+# Optimisation scratch: half-encoded media, so a failed or interrupted
+# ffmpeg run can never be mistaken for a finished asset in assets/.
+*.part
+*.tmp.mp4
+*.tmp.gif
 
 # Original assets being replaced - kept locally as a safety net, never publish
 _backup_originals/
@@ -21,6 +26,18 @@ _backup_originals/
 # Python bytecode from the probing/asset tooling
 __pycache__/
 *.py[cod]
+
+# Node dependency tree (tools/ runs on Node built-ins only; this is a guard
+# in case anything is ever npm-installed locally)
+node_modules/
+package-lock.json
+
+# Deploy / hosting metadata - belongs to the host, not the repo
+.vercel/
+.netlify/
+.firebase/
+.DS_Store.local
+CNAME
 
 # OS junk
 Thumbs.db
@@ -33,3 +50,4 @@ Desktop.ini
 *.swo
 .idea/
 .vscode/
+.claude/

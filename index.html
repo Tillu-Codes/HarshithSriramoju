@@ -7,6 +7,13 @@
 <meta name="description" content="">
 
 <link rel="stylesheet" href="css/styles.css">
+
+<!-- Hero asset: start it downloading now instead of after settings.js,
+     content.js and app.js have all parsed. `type` lets the browser reject
+     the preload if module 1 is ever swapped back to a still image, and
+     tools/check.js asserts href + as + type all match module 1's src in
+     content.js, so this cannot silently drift out of sync. -->
+<link rel="preload" as="video" type="video/mp4" href="assets/pics&gifs/new1.mp4" fetchpriority="high">
 </head>
 
 <body>
@@ -21,7 +28,7 @@
   <button class="lb__close" id="lbClose" type="button" aria-label="Close">&times;</button>
   <button class="lb__nav lb__nav--prev" id="lbPrev" type="button" aria-label="Previous">&#8249;</button>
   <button class="lb__nav lb__nav--next" id="lbNext" type="button" aria-label="Next">&#8250;</button>
-  <figure class="lb__stage"><img id="lbImg" alt=""></figure>
+  <figure class="lb__stage"><img id="lbImg" alt=""><video id="lbVid" class="lb__video" playsinline loop muted hidden></video></figure>
 </div>
 
 <!-- ======================== BACK TO TOP ============================ -->

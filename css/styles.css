@@ -1,11 +1,11 @@
 /* =====================================================================
-   GRAPHIC DESIGN PORTFOLIO 2026 — Behance project page replica
-   Palette + type taken from the source project's inline styles:
+   GRAPHIC DESIGN PORTFOLIO 2026 — stylesheet
+   Palette + type:
      content bg  #181a1a · title #191919 · muted #a4a4a4 · body #696969
    ===================================================================== */
 
 :root{
-  --canvas: 1400px;            /* Behance project canvas width */
+  --canvas: 1400px;            /* design canvas width */
   --bg-content: #181a1a;
   --ink: #191919;
   --muted: #a4a4a4;
@@ -51,14 +51,17 @@ button{ font:inherit; color:inherit; border:0; background:none; cursor:pointer }
 }
 
 .shot{ position:relative; overflow:hidden; background:var(--ph,#202222) }
-.shot img{ width:100%; height:auto; display:block }
-.shot.can-fade img{ opacity:0; transition:opacity var(--fdur,600ms) ease }
-.shot.can-fade.loaded img{ opacity:1 }
+/* `img` and `video` share every rule below: the motion pages ship as
+   <video> while still images stay <img>, and both must fit the same
+   reserved box, fade in, drift and zoom identically. */
+.shot img,.shot video{ width:100%; height:auto; display:block }
+.shot.can-fade img,.shot.can-fade video{ opacity:0; transition:opacity var(--fdur,600ms) ease }
+.shot.can-fade.loaded img,.shot.can-fade.loaded video{ opacity:1 }
 .shot.can-zoom{ cursor:zoom-in }
-.shot.can-drift img{ transition:transform var(--ddur,1400ms) var(--ease) }
-.shot.can-zoom:hover img{ transform:scale(1.012) }
+.shot.can-drift img,.shot.can-drift video{ transition:transform var(--ddur,1400ms) var(--ease) }
+.shot.can-zoom:hover img,.shot.can-zoom:hover video{ transform:scale(1.012) }
 
-/* collections — Behance lays tiles out in rows weighted by aspect ratio */
+/* collections — tiles laid out in rows weighted by aspect ratio */
 .coll__row{ display:flex; align-items:stretch; gap:2px }
 .coll__row + .coll__row{ margin-top:2px }
 .coll__cell{ position:relative; overflow:hidden; flex:0 0 auto }
@@ -84,12 +87,16 @@ button{ font:inherit; color:inherit; border:0; background:none; cursor:pointer }
 .lb.show{ opacity:1 }
 .lb[hidden]{ display:none }
 .lb__stage{ margin:0; max-width:100%; max-height:100% }
-.lb__stage img{
+.lb__stage img,.lb__stage .lb__video{
   max-width:100%; max-height:calc(100vh - 112px); width:auto; height:auto;
   border-radius:4px; box-shadow:0 24px 70px rgba(0,0,0,.6);
   transform:scale(.94); transition:transform var(--lbdur,420ms) var(--ease);
 }
-.lb.show .lb__stage img{ transform:none }
+/* the video slot only exists for motion pages, so it needs an explicit
+   background — without one it reads as a transparent hole while buffering */
+.lb__stage .lb__video{ background:#0c0c0c }
+.lb__stage .lb__video[hidden],.lb__stage img[hidden]{ display:none }
+.lb.show .lb__stage img,.lb.show .lb__stage .lb__video{ transform:none }
 .lb__close,.lb__nav{
   position:absolute; color:#fff; background:rgba(255,255,255,.09);
   border-radius:50%; display:flex; align-items:center; justify-content:center;
@@ -116,211 +123,12 @@ button{ font:inherit; color:inherit; border:0; background:none; cursor:pointer }
 .totop.show{ opacity:1; visibility:visible; transform:none }
 .totop:hover{ background:var(--blue); transform:translateY(-3px) }
 
-/* --------------------------------------------------------- ABOUT SLIDE
-   Module type "about" (page 2). The original was a flat raster image;
-   this rebuilds it as live text on the same 1400x788 canvas.
-
-   `--u` is ONE design pixel. Every number below is the real pixel
-   position measured off the source slide, so `calc(474 * var(--u))`
-   simply means "x = 474". Change a number, reload, done.
-   -------------------------------------------------------------------- */
-.module[data-type="about"]{ container-type:inline-size }
-
-.about{
-  --u:1px;
-  --ab-paper:#e2e2e3;
-  --ab-grid:#d0cfd0;
-  --ab-ink:#151717;
-  --ab-body:#202022;
-  --ab-muted:#38383b;
-  --ab-red:#91434f;
-  --ab-red-hi:#b8242b;
-
-  position:relative;
-  width:100%;
-  aspect-ratio:1400/788;
-  overflow:hidden;
-  background-color:var(--ab-paper);
-  background-image:
-    linear-gradient(to right,var(--ab-grid) 1px,transparent 1px),
-    linear-gradient(to bottom,var(--ab-grid) 1px,transparent 1px);
-  background-size:calc(45 * var(--u)) calc(45 * var(--u));
-  background-position:calc(1 * var(--u)) calc(25 * var(--u));
-  color:var(--ab-ink);
-  font-family:Helvetica,Arial,"Helvetica Neue",sans-serif;
-}
-/* one design pixel = 1/1400 of the slide's real width, so the whole
-   page scales like an image instead of reflowing. */
-@supports (container-type:inline-size){
-  .about{ --u:calc(100cqw / 1400) }
-}
-
-/* --- empty selection marquee on the left (pure decoration) -------- */
-.about__frame{
-  position:absolute;
-  left:calc(129 * var(--u));
-  top:calc(82 * var(--u));
-  width:calc(270 * var(--u));
-  height:calc(538 * var(--u));
-  border:calc(2 * var(--u)) solid var(--ab-red);
-  border-bottom:0;
-  pointer-events:none;
-}
-.about__hnd{
-  position:absolute;
-  width:calc(17 * var(--u));
-  height:calc(15 * var(--u));
-  background:#fbfdfd;
-  border:calc(2 * var(--u)) solid var(--ab-red-hi);
-}
-
-/* --- the 3D loop, pinned inside that selection box --------------- *
-   Same rect as .about__frame plus a small inset, so the media can
-   never reach the red rule or the torn-paper footer. `cover` fills
-   the box top to bottom — the figure spans ~91% of it — and only
-   ever clips the side plate, which the filter has already turned to
-   alpha, so the figure keeps ~52px of clearance either side.      */
-.about__fig{
-  position:absolute;
-  left:calc(129 * var(--u));
-  top:calc(82 * var(--u));
-  width:calc(270 * var(--u));
-  height:calc(538 * var(--u));
-  padding:calc(8 * var(--u));
-}
-.about__figvid{
-  display:block;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  filter:url(#fig-key);      /* black plate -> alpha (built in app.js) */
-}
-
-/* --- left column: greeting + introduction ------------------------ *
-   padding-top pins the greeting to y=123; min-height pins the
-   EDUCATION block to y=478. Write more intro text and EDUCATION is
-   simply pushed down instead of colliding.                          */
-.about__left{
-  margin-left:calc(474 * var(--u));
-  width:calc(440 * var(--u));
-  padding-top:calc(123 * var(--u));
-  min-height:calc(478 * var(--u));
-}
-.about__greet{
-  margin:0 0 0 calc(-7 * var(--u));   /* offsets Arial Black's left side bearing */
-  font-family:"Arial Black","Archivo Black","Helvetica Neue",Arial,sans-serif;
-  font-weight:900;
-  font-size:calc(99 * var(--u));
-  line-height:.82;
-  letter-spacing:.08em;
-  color:var(--ab-ink);
-}
-.about__lead{
-  margin:calc(18 * var(--u)) 0 0;
-  font-size:calc(15 * var(--u));
-  line-height:1;
-  font-weight:700;
-  color:var(--ab-ink);
-}
-.about__body{
-  margin:calc(19 * var(--u)) 0 0;
-  font-size:calc(15 * var(--u));
-  line-height:calc(17.8 * var(--u));
-  color:var(--ab-body);
-}
-
-/* --- EDUCATION --------------------------------------------------- */
-.about__edu{
-  margin-left:calc(474 * var(--u));
-  width:calc(440 * var(--u));
-}
-.about__edu .about__h{ margin-bottom:calc(25 * var(--u)) }
-
-/* --- right column: skills + experience --------------------------- */
-.about__right{
-  position:absolute;
-  left:calc(992 * var(--u));
-  top:calc(115 * var(--u));
-  width:calc(310 * var(--u));
-}
-.ab-group--skills .about__h{ margin-bottom:calc(27 * var(--u)) }
-.ab-group--xp{ margin-top:calc(51 * var(--u)) }
-.ab-group--xp .about__h{ margin-bottom:calc(28 * var(--u)) }
-
-.about__h{
-  margin:0 0 0 calc(-3 * var(--u));   /* offsets the left side bearing */
-  font-family:"Arial Black","Archivo Black","Helvetica Neue",Arial,sans-serif;
-  font-weight:900;
-  font-size:calc(38 * var(--u));
-  line-height:1;
-  letter-spacing:.05em;
-  color:var(--ab-ink);
-}
-
-/* --- skill tiles -------------------------------------------------- */
-.skgrid{
-  display:grid;
-  grid-template-columns:repeat(2,calc(63 * var(--u)));
-  gap:calc(19 * var(--u)) calc(34 * var(--u));
-}
-.sk{
-  --sk-bg:#1b1b1b; --sk-fg:#fff;
-  display:block;
-  width:calc(63 * var(--u));
-  height:calc(63 * var(--u));
-}
-.sk--ps{ --sk-bg:#001e36; --sk-fg:#31a8ff }
-.sk--ai{ --sk-bg:#330000; --sk-fg:#ff9a00 }
-.sk--ae{ --sk-bg:#00005b; --sk-fg:#9999ff }
-.sk--pr{ --sk-bg:#2a0634; --sk-fg:#ea77ff }
-.sk--fg{ --sk-bg:#1e1e1e; --sk-fg:#f24e1e }
-.sk--bl{ --sk-bg:#e87d0d; --sk-fg:#fff }
-.sk__svg{ display:block; width:100%; height:100% }
-.sk__plate{ fill:var(--sk-bg) }
-.sk__letters{
-  fill:var(--sk-fg);
-  font-family:Helvetica,Arial,sans-serif;
-  font-size:26px;
-  font-weight:700;
-  letter-spacing:-.5px;
-}
-
-/* --- experience / education entries -------------------------------- */
-.ab-entry{ margin:0 }
-.entry__period,
-.entry__muted{ margin:0 }
-.entry__period,
-.entry__strong{
-  font-size:calc(15 * var(--u));
-  line-height:calc(17.8 * var(--u));
-  font-weight:700;
-  color:var(--ab-ink);
-}
-.entry__strong{ margin-top:calc(10 * var(--u)) }
-.entry__muted{
-  font-size:calc(14 * var(--u));
-  line-height:calc(17.8 * var(--u));
-  font-weight:400;
-  color:var(--ab-muted);
-  margin-top:calc(12 * var(--u));
-}
-.ab-entry + .ab-entry{ margin-top:calc(50 * var(--u)) }
-
-/* --- torn-paper footer: real pixels sliced from the source slide --- */
-.about__edge{
-  position:absolute;
-  left:0; bottom:0;
-  width:100%;
-  height:auto;
-  pointer-events:none;
-}
-
 /* --------------------------------------------------------- THANKS SLIDE
    Module type "thanks" (final page). The GRACIAS plate is raster art,
    but the header and the contact row are live HTML over it so the
-   links work and the text stays selectable. Same container-query trick
-   as the about slide: `--u` is one design pixel, so the whole block
-   scales like an image. Coordinates come straight off the plate.
+   links work and the text stays selectable. Container-query trick:
+   `--u` is one design pixel, so the whole block scales like an image.
+   Coordinates come straight off the plate.
    -------------------------------------------------------------------- */
 .module[data-type="thanks"]{ container-type:inline-size }
 
@@ -423,9 +231,8 @@ button{ font:inherit; color:inherit; border:0; background:none; cursor:pointer }
 
 /* --------------------------------------------------------- VIDEO GRID
    Module type "videogrid" (page 8) — six tiles in a fixed bento shape.
-   Same container-query trick as the about slide: `--u` is one design
-   pixel, so the whole block scales like an image and NEVER reflows
-   between 761px and 1400px+.
+   Container-query trick: `--u` is one design pixel, so the whole block
+   scales like an image and NEVER reflows between 761px and 1400px+.
 
    Geometry, all derived so the ratios come out exact (see README):
        W = grid width          G = gap (12 at 1400)
@@ -625,49 +432,6 @@ button{ font:inherit; color:inherit; border:0; background:none; cursor:pointer }
 
 /* --------------------------------------------------------- RESPONSIVE */
 @media (max-width:760px){
-  /* the slide is a fixed canvas; on phones it becomes a real document */
-  .about{
-    --u:1px;
-    aspect-ratio:auto;
-    overflow:visible;
-    padding:44px 22px 90px;
-    background-size:45px 45px;
-    background-position:1px 25px;
-  }
-  .about__frame{ display:none }
-  /* the frame is gone on phones, so the clip joins the stack instead:
-     full column width, centred, never overlapping. A 3:4 box under
-     `cover` keeps the figure filling it top to bottom, and pins the
-     height before metadata lands so nothing below it shifts. */
-  .about__fig{
-    position:static;
-    width:auto; height:auto; padding:0;
-    margin-top:34px;
-  }
-  .about__figvid{ height:auto; aspect-ratio:3/4 }
-  .about__left,
-  .about__edu{
-    margin-left:0; width:auto; padding-top:0; min-height:0;
-  }
-  .about__edu{ margin-top:34px }
-  .about__right{ position:static; left:auto; top:auto; width:auto; }
-  .about__greet{ font-size:clamp(44px,13vw,58px); line-height:.9 }
-  .about__lead{ font-size:17px; margin-top:18px }
-  .about__body{ font-size:15px; line-height:1.6; margin-top:14px }
-  .about__h{ font-size:26px }
-  .about__edu .about__h,
-  .ab-group--skills .about__h,
-  .ab-group--xp .about__h{ margin-bottom:14px }
-  .ab-group--xp{ margin-top:30px }
-  .skgrid{ grid-template-columns:repeat(4,54px); gap:14px }
-  .sk{ width:54px; height:54px }
-  .entry__period,
-  .entry__strong,
-  .entry__muted{ font-size:15px; line-height:1.5 }
-  .entry__strong,
-  .entry__muted{ margin-top:4px }
-  .ab-entry + .ab-entry{ margin-top:22px }
-  .about__edge{ position:relative; margin-top:34px }
 
   .coll__row{ flex-direction:column; gap:2px }
   .coll__row + .coll__row{ margin-top:2px }

@@ -10,7 +10,7 @@
 
 const SETTINGS = {
 
-  /* ---- scroll-in reveal for each module (Behance-style fade + rise) ---- */
+  /* ---- scroll-in reveal for each module (fade + rise) ---- */
   reveal: {
     enabled: true,
     distance: 48,          // px the module rises from
@@ -28,15 +28,21 @@ const SETTINGS = {
     duration: 1400,        // ms for the transform to settle
   },
 
-  /* ---- lazy loading ---- */
+  /* ---- lazy loading ----
+     Images below the fold use the browser's native loading="lazy", so
+     there is no custom prefetch distance to tune — Chrome/Firefox pick
+     their own margin (roughly one to two viewports) based on connection
+     type. `placeholder` is the colour shown in the reserved box until
+     the image decodes. */
   lazy: {
     enabled: true,
-    rootMargin: '600px 0px',   // start fetching this far ahead of the viewport
     placeholder: '#202222',    // colour shown until the image decodes
   },
 
-  /* ---- animated GIFs pause while scrolled out of view (saves CPU) ---- */
-  gif: {
+  /* ---- motion pages pause while scrolled out of view ----
+     The animated pages are MP4s, so unlike a GIF they can be stopped
+     outright instead of just hidden: nothing off-screen is decoding. */
+  motion: {
     pauseWhenHidden: true,
   },
 

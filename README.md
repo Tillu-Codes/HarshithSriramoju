@@ -1,8 +1,7 @@
-# GRAPHIC DESIGN PORTFOLIO 2026 — Behance project page replica
+# GRAPHIC DESIGN PORTFOLIO 2026
 
-A dependency-free static rebuild of
-[the Behance project](https://www.behance.net/gallery/252076827/GRAPHIC-DESIGN-PORTFOLIO-2026).
-Open `index.html` in a browser — no build step, no server required.
+A dependency-free static portfolio site. Open `index.html` in a browser —
+no build step, no server required.
 
 ```
 index.html      page shell (module stream, lightbox, back-to-top)
@@ -10,28 +9,29 @@ settings.js     ← ANIMATIONS & EFFECTS. Edit this to change how things move.
 content.js      ← TEXT, IMAGES, VIDEOS. Edit this to change what's shown.
 css/styles.css  styling + keyframes
 js/app.js       renders content.js and drives the effects from settings.js
-assets/pics&gifs/    the images shown on the page (1.gif … 20.png)
+assets/pics&gifs/    the images shown on the page
+assets/videos/       the six clips in the video grid
+assets/thumbnails/   optimised poster stills (see below)
 ```
 
 ## What's on the page
 
-The stream is the 20 blocks from the source project, in file order
-(`1.gif` → `20.png`), each laid out at its real aspect ratio — except two
-of them, which are no longer flat images:
+A vertical stream of 13 modules, laid out in `content.js` in file order.
+Each one is a full-width block at its own aspect ratio:
 
-- **block 2** used to be a single raster (`2.gif`), so its text could not
-  be edited. It is now live HTML (see *The `about` slide* below).
-- **block 8** — the "LOGOS & MARKS" page — used to be one flat GIF
-  (`8.gif`). It is now a live six-tile video grid (see *The video grid*
-  below). The GIF is still on disk, just no longer referenced.
+| # | Type | Shown as |
+|---|------|----------|
+| 1, 2, 3 | `image` | looping MP4 motion pages |
+| 4 | `clip` | the showreel — still card, plays on hover |
+| 5, 7, 12, 14 | `image` | thin animated banner strips (MP4) |
+| 6, 13 | `image` | stills (WebP) |
+| 15 | `image` | the `new15` motion page (MP4) |
+| 8 | `videogrid` | six tiles in a bento grid |
+| 20 | `thanks` | the GRACIAS plate with live contact links |
 
-Everything else from the source project — the extra CDN images, the
-collections, the video and the Spotify embed — has been removed, so no
-Behance/Adobe network requests are made any more.
-
-Plus the project title and description, used only for the browser tab
-and the `<meta name="description">` tag — nothing is rendered above or
-below the images. The page opens straight on image 1.
+Plus the project title and description, used only for the browser tab and
+the `<meta name="description">` tag — nothing is rendered above or below
+the images. The page opens straight on image 1.
 
 ## Editing it
 
@@ -42,21 +42,30 @@ Everything textual lives in `content.js`:
 meta.title        // "GRAPHIC DESIGN PORTFOLIO 2026"
 meta.description  // the intro paragraph (browser tab + meta tag only)
 modules[n].caption
+modules[n].alt
 ```
 
-## Images
+### Images
 
 Every image module points straight at a local file:
 
 ```js
-{ "n": 1, "type": "image", "src": "assets/pics&gifs/1.gif", "w": 1400, "h": 788, "alt": "…" }
+{ "n": 1, "type": "image", "src": "assets/pics&gifs/new1.mp4", "w": 1400, "h": 788, "alt": "…" }
 ```
+
+The file extension decides how the module renders: a video extension
+(`.mp4`, `.webm`, `.mov`) becomes a muted, looping `<video>` that plays
+while it is on screen and stops when it is not; anything else stays an
+`<img>`. The eight animated pages were converted to MP4 — the same
+pictures as before, but roughly 73% lighter and decoded off the main
+thread.
 
 Drop a file into `assets/pics&gifs/`, add an object like the above to
 `content.js`, and reload. `w`/`h` are only the aspect ratio (any unit
-works — they drive the layout box). `settings.media.preferLocal` is off
-because `src` is already local; turn it back on if you ever want
-`assets/…` to shadow a CDN URL again.
+works — they drive the layout box).
+
+`settings.media.preferLocal` is off because `src` is already local; turn
+it back on if you ever want `assets/…` to shadow a remote URL again.
 
 ### Videos and embeds
 ```js
@@ -71,58 +80,28 @@ block, copy one and edit it to add a block, move them to reorder. Collections
 hold their tiles in `rows` — each row is an array of `{ src, w, h, flex }`,
 where `flex` is the tile's share of the row width.
 
-### The `about` slide (block 2)
+### The showreel (block 4)
 
 ```js
-{ "n": 2, "type": "about", … }
+{
+  "n": 4,
+  "type": "clip",
+  "src": "assets/pics&gifs/showreel.mp4",
+  "poster": "assets/thumbnails/optimized/showpic.webp",
+  "ratio": "16:9",
+  "w": 1400, "h": 788
+}
 ```
 
-This is the HELLO / SKILLS / EXPERIENCE / EDUCATION page. It is rendered
-as real text on a **fixed 1400 × 788 canvas**, so it behaves like an image
-in the stream (it scales, it does not reflow) until the screen is under
-760px wide, where it stacks into a normal readable document.
+A still card that plays its video while the cursor is on it, and only
+then. Nothing autoplays, and the `<video>` is built with no `src`, so a
+page load transfers **zero video bytes**.
 
-Editable fields:
+`poster` points at a small optimised WebP — the full-size original was 9x
+heavier for no visible gain, so it is not shipped. The box is
+ratio-locked, so pointing `poster` at any other file shifts nothing.
 
-```js
-greeting          // "HELLO"
-intro.lead        // "Hi, I'm Harshith Sriramoju"
-intro.body        // the paragraph beneath it
-skills.heading    // "SKILLS"
-skills.items[]    // { "key": "ps", "name": "Photoshop" }  — key drives the
-                  // tile colour + the letters on it (ps / ai / ae / pr …)
-experience.heading// "EXPERIENCE"
-experience.entries[] // { "period": "2023-Present", "role": "Video Editor",
-                     //   "org": "optional, only shown if present" }
-education.heading // "EDUCATION"
-education.entries[]  // { "degree": "…", "school": "…" }
-edge              // the torn-paper footer artwork (see below)
-```
-
-**Adding a skill** = copy an entry in `skills.items` and give it a new
-`key`. Add a matching `.sk--<key>` rule in `css/styles.css` for its
-colours (or reuse an existing one); without one it falls back to a dark
-tile with white letters.
-
-**Skills are laid out in a 2 × 2 grid** — the two extra logos from the
-source slide were removed on purpose. Widening it is one line:
-`.skgrid { grid-template-columns: repeat(3, …) }`.
-
-`edge` points at `assets/about-edge.png`, the bottom 168px of the
-original slide (torn paper, red shape, portrait, and the three lower
-selection handles). It is a real image so that band stays pixel-exact.
-Replace that file to change the artwork; the grid behind it is drawn in
-CSS and will line up on its own.
-
-Geometry lives in `css/styles.css` under the `ABOUT SLIDE` banner. Every
-number is the element's real pixel position in the source slide, written
-as `calc(N * var(--u))`, where `--u` is one design pixel. Change `474` to
-`400` and the column moves to `x = 400`. The `padding-top` / `min-height`
-pair on `.about__left` is what pins the greeting to `y = 123` and
-EDUCATION to `y = 478` — if you write a much longer intro, EDUCATION is
-pushed down instead of colliding with it.
-
-### The video grid (block 8, "LOGOS & MARKS")
+### The video grid (block 8)
 
 ```js
 {
@@ -199,14 +178,13 @@ source as `preload="metadata"` once its tile is within `preloadMargin`
 videos. `preload="auto"` is never used.
 
 The tiles deliberately **do not** carry the `.shot` class, so the drift
-effect, the GIF-pause feature and the lightbox all ignore them, and the
+effect, motion playback and the lightbox all ignore them, and the
 lightbox's arrow keys skip straight past them.
 
 #### Geometry
 
-Like the about slide this is a fixed canvas that scales like an image —
-it never reflows between 761px and 1400px+, and stacks into one column
-under 760px.
+The grid is a fixed canvas that scales like an image — it never reflows
+between 761px and 1400px+, and stacks into one column under 760px.
 
 ```
 W = 1400 - 2·pad   grid width        (pad 48  -> 1304)
@@ -226,11 +204,10 @@ or `--vg-gap` and the whole bento rescales itself.
 
 #### Optimised posters
 
-The originals in `assets/thumbnails/` (487 KB – 1.98 MB each) are kept
-untouched. `assets/thumbnails/optimized/` holds WebP copies at quality 85
-sized to twice their display width — about 28–61 KB each, ~96% smaller.
-Point a tile's `poster` at an original any time if you would rather serve
-the full-size file.
+`assets/thumbnails/optimized/` holds WebP copies of the poster stills at
+quality 85, sized to twice their display width — about 28–61 KB each.
+Point a tile's `poster` at a larger source any time if you would rather
+serve the full-size file.
 
 ### Animations and effects
 `settings.js` — every effect is a labelled block you can switch off or tune:
@@ -238,36 +215,34 @@ the full-size file.
 - `reveal` — modules fade + rise in on scroll (distance, duration, easing, stagger)
 - `drift` — slow Ken-Burns scale on images as they pass through the viewport
 - `lazy` / `media.fadeIn` — lazy loading with a cross-fade
-- `gif.pauseWhenHidden` — halts off-screen GIFs to save CPU
+- `motion.pauseWhenHidden` — attaches and plays a motion page only as it
+  nears the viewport, and pauses it again once it is gone (the initial
+  load therefore pulls exactly one video)
 - `lightbox` — click any image to zoom; arrow keys and Esc navigate
 - `chrome` — back-to-top button, smooth scroll
+- `showreel` — page 4's hover-to-play clip (see above)
 - `videoGrid` — the six-tile video grid: hover/tap playback, sound policy,
   preload distance, rewind-on-leave, pause-on-scroll-away (see above)
 
 Setting `enabled: false` on any block removes that behaviour entirely. The
-`prefers-reduced-motion` media query overrides all of it for accessibility.
-
-## Note on the assets
-
-Everything the page displays lives in `assets/`. The images in
-`assets/pics&gifs/` and the footer band `assets/about-edge.png` are the
-**original creator's work (RAAGAV SUNDAR)**. Swap them for your own
-material before publishing this anywhere public — see "Images" and
-*The `about` slide* above. The text in `content.js` is already yours.
+`prefers-reduced-motion` media query switches off the reveal, drift and
+smooth-scroll effects, and holds each motion page on its first frame
+instead of playing it.
 
 ## tools/
 
 Dev-only helpers, nothing here affects the page:
 
 ```
-preview.html   renders one module on its own at full canvas size.
-               Pick it with the hash: #videogrid (default), #about, #8 …
-compare.ps1    measures preview render.png against the source slide
-render*.png    headless-Chrome screenshots (preview, and block 2 on index.html)
 check.js       node tools/check.js — every class app.js emits has CSS,
-               every field the about renderer reads exists, assets
-               resolve, and the videogrid's tiles, ratios, videos,
-               posters, CSS classes, settings flags and isolation from
-               drift / GIF-pause / lightbox are all verified
+               every asset content.js references exists, the hero
+               preload matches module 1 (including as=/type=), the motion
+               pages really render as <video>, and the
+               videogrid's tiles, ratios, videos, posters, CSS classes,
+               settings flags and isolation from drift / motion playback /
+               lightbox are all verified
+preview.html   renders one module on its own at full canvas size.
+               Pick it with the hash: #videogrid (default), #8 …
+compare.ps1    measures a preview render against the source slide
 *.ps1          one-off measurement scripts used to derive the geometry
 ```

@@ -4,9 +4,9 @@
  *  Change text, swap image URLs, reorder or delete modules,
  *  and tweak animation settings. Then just reload index.html.
  *
- *  Every image below is a local file in assets/pics&gifs/ — nothing is
- *  loaded from the Behance CDN anymore. w/h only drive the layout box
- *  (the aspect ratio); they are the real pixel sizes of each file.
+ *  Every image below is a local file in assets/pics&gifs/. w/h only
+ *  drive the layout box (the aspect ratio); they are the real pixel
+ *  sizes of each file.
  * ===================================================================== */
 
 const CONTENT = {
@@ -18,68 +18,27 @@ const CONTENT = {
     {
       "n": 1,
       "type": "image",
-      "src": "assets/pics&gifs/new1.gif",
+      "src": "assets/pics&gifs/new1.mp4",
       "w": 1400,
       "h": 788,
       "caption": "",
       "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 1"
     },
-    /* --------------------------------------------------------------
-     *  MODULE 2 — the "HELLO" about page.
-     *  This one is live HTML, not an image, so every line below is
-     *  editable text. Edit and reload.
-     * -------------------------------------------------------------- */
     {
       "n": 2,
-      "type": "about",
-      "w": 1400,
-      "h": 788,
-
-      "greeting": "HELLO",
-
-      "intro": {
-        "lead": "Hi, I’m Harshith Sriramoju",
-        "body": "A Video Editor and Cinematographer passionate about crafting powerful visual stories across both long-form and short-form content. Proficient in Premiere Pro, After Effects, Photoshop, and Illustrator, I have a strong hand in motion graphics, VFX, and 3D creative works. I collaborate with creators and brands to transform bold ideas into seamless, high-impact cinematic experiences."
-      },
-
-      "education": {
-        "heading": "EDUCATION",
-        "entries": [
-          { "degree": "Bachelor of Engineering", "school": "Matrusri engineering College | 2025-2029" }
-        ]
-      },
-
-      "experience": {
-        "heading": "EXPERIENCE",
-        "entries": [
-          { "period": "2023-Present", "role": "Video Editor", "org": "" },
-          { "period": "2025-Present", "role": "Cinematographer", "org": "" }
-        ]
-      },
-
-      "skills": {
-        "heading": "SKILLS",
-        "items": [
-          { "key": "ps", "name": "Photoshop" },
-          { "key": "ai", "name": "Illustrator" },
-          { "key": "ae", "name": "After Effects" },
-          { "key": "pr", "name": "Premiere Pro" }
-        ]
-      },
-
-      /* Torn-paper footer sliced from the original slide — paper, red
-         shape and portrait. Swap this file to change the artwork. */
-      "edge": "assets/about-edge.png",
-
-      /* Looping 3D clip that plays inside the empty selection frame. */
-      "fig": "assets/pics&gifs/3dfig.mp4"
+      "type": "image",
+      "src": "assets/pics&gifs/new2.mp4",
+      "w": 1536,
+      "h": 874,
+      "caption": "",
+      "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 2"
     },
     {
       "n": 3,
       "type": "image",
-      "src": "assets/pics&gifs/3.gif",
-      "w": 1400,
-      "h": 788,
+      "src": "assets/pics&gifs/new3.mp4",
+      "w": 1536,
+      "h": 874,
       "caption": "",
       "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 3"
     },
@@ -93,9 +52,9 @@ const CONTENT = {
          "src"   the clip itself, 16:9, shipped untouched (h264 + mp3)
          "poster" the still shown until the cursor arrives. It points at
                   the small optimised WebP in assets/thumbnails/ — the
-                  1.8 MB original is 9x heavier for no visible gain.
-                  Point it back at "assets/pics&gifs/showpic.png" any
-                  time; the box is ratio-locked so nothing shifts.
+                  full-size original was 9x heavier for no visible gain,
+                  so it is no longer shipped. The box is ratio-locked so
+                  nothing shifts.
          The card is 1.92:1 against a 16:9 clip, so the poster is fitted
          (object-fit:contain) rather than cropped — its edge captions
          stay whole. */
@@ -111,16 +70,16 @@ const CONTENT = {
     {
       "n": 5,
       "type": "image",
-      "src": "assets/pics&gifs/new5.gif",
+      "src": "assets/pics&gifs/new5.mp4",
       "w": 1400,
-      "h": 55,
+      "h": 56,
       "caption": "",
       "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 5"
     },
     {
       "n": 6,
       "type": "image",
-      "src": "assets/pics&gifs/new6.png",
+      "src": "assets/pics&gifs/new6.webp",
       "w": 1672,
       "h": 941,
       "caption": "",
@@ -129,16 +88,17 @@ const CONTENT = {
     {
       "n": 7,
       "type": "image",
-      "src": "assets/pics&gifs/new7.gif",
+      "src": "assets/pics&gifs/new7.mp4",
       "w": 1400,
-      "h": 55,
+      "h": 56,
       "caption": "",
       "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 7"
     },
     /* --------------------------------------------------------------
      *  MODULE 8 — "LOGOS & MARKS", rebuilt as a LIVE VIDEO GRID.
-     *  It used to be a single flat GIF (assets/pics&gifs/8.gif, which
-     *  is still on disk, just no longer referenced). Now it is six
+     *  It used to be a single flat GIF, which has since been removed
+     *  from disk along with the rest of the superseded animation files.
+     *  Now it is six
      *  tiles in a bento shape and each tile plays its video while the
      *  cursor is on it. Nothing plays on its own.
      *
@@ -176,16 +136,16 @@ const CONTENT = {
     {
       "n": 12,
       "type": "image",
-      "src": "assets/pics&gifs/12.gif",
+      "src": "assets/pics&gifs/12.mp4",
       "w": 1400,
-      "h": 55,
+      "h": 56,
       "caption": "",
       "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 12"
     },
     {
       "n": 13,
       "type": "image",
-      "src": "assets/pics&gifs/new13.png",
+      "src": "assets/pics&gifs/new13.webp",
       "w": 1505,
       "h": 1045,
       "caption": "",
@@ -194,16 +154,16 @@ const CONTENT = {
     {
       "n": 14,
       "type": "image",
-      "src": "assets/pics&gifs/14.gif",
+      "src": "assets/pics&gifs/14.mp4",
       "w": 1400,
-      "h": 55,
+      "h": 56,
       "caption": "",
       "alt": "GRAPHIC DESIGN PORTFOLIO 2026 — image 14"
     },
     {
       "n": 15,
       "type": "image",
-      "src": "assets/pics&gifs/new15.gif",
+      "src": "assets/pics&gifs/new15.mp4",
       "w": 1400,
       "h": 788,
       "caption": "",
@@ -212,7 +172,7 @@ const CONTENT = {
     {
       "n": 20,
       "type": "thanks",
-      "src": "assets/pics&gifs/20.png",
+      "src": "assets/pics&gifs/20.webp",
       "w": 1400,
       "h": 788,
       "portfolio": "PORTFOLIO OF HARSHITH SRIRAMOJU",

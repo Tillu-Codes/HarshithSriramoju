@@ -1,10 +1,10 @@
 /* Static consistency check: every class app.js emits must exist in CSS,
-   every content.js field the about renderer reads must be present, and the
+   every asset content.js references must exist on disk, and the
    videogrid module (page 8) must reference real assets with valid ratios. */
 const fs = require('fs');
 const path = require('path');
 const root = path.join(__dirname, '..');
-const read = f => fs.readFileSync(path.join(root, f), 'utf8').replace(/^\uFEFF/, '');
+const read = f => fs.readFileSync(path.join(root, f), 'utf8').replace(/^﻿/, '');
 
 const css = read('css/styles.css');
 const app = read('js/app.js');
@@ -16,30 +16,16 @@ for (const m of css.matchAll(/\.([A-Za-z][\w-]*)/g)) cssClasses.add(m[1]);
 
 /* --- classes app.js produces --- */
 const jsClasses = new Set();
-// literal 'className = "a b"' and textEl/sectionHeading 'cls' string args
 for (const m of app.matchAll(/className\s*=\s*'([^']+)'/g)) m[1].split(/\s+/).forEach(c => c && jsClasses.add(c));
 for (const m of app.matchAll(/\.className\s*=\s*"([^"]+)"/g)) m[1].split(/\s+/).forEach(c => c && jsClasses.add(c));
-for (const m of app.matchAll(/'(sk|entry|ab-entry|about__[a-z]+|module|shot|coll__\w+|embed|caption|lb\w*|totop|skgrid)'/g)) jsClasses.add(m[1]);
-// 'sk sk--' + key  ->  base + generated prefix
-jsClasses.add('sk'); jsClasses.add('sk__svg'); jsClasses.add('sk__plate'); jsClasses.add('sk__letters');
+for (const m of app.matchAll(/'(module|shot|coll__\w+|embed|caption|lb\w*|totop)'/g)) jsClasses.add(m[1]);
 
 const missing = [...jsClasses]
   .filter(c => !cssClasses.has(c))
   // structural wrappers that intentionally carry no styling
-  .filter(c => !['ab-entries', 'ab-group', 'lbClose', 'lbImg', 'lbNext', 'lbPrev'].includes(c))
-  .filter(c => c !== 'sk--')
+  .filter(c => !['lbClose', 'lbImg', 'lbNext', 'lbPrev', 'lbVid'].includes(c))
   .sort();
 console.log('JS classes with no CSS rule : ' + (missing.length ? missing.join(', ') : 'none'));
-
-/* --- about-module fields --- */
-const mod = content.match(/"type":\s*"about"[\s\S]*?\n    \}/);
-if (!mod) { console.log('FAIL: no about module in content.js'); process.exit(1); }
-const block = mod[0];
-const wanted = ['greeting', 'intro', 'lead', 'body', 'education', 'entries',
-                'degree', 'school', 'experience', 'period', 'role', 'skills',
-                'items', 'key', 'name', 'edge'];
-const absent = wanted.filter(k => !new RegExp('"' + k + '"').test(block));
-console.log('about fields missing        : ' + (absent.length ? absent.join(', ') : 'none'));
 
 /* --- assets referenced --- */
 const assets = [...content.matchAll(/"((?:assets|https?:)[^"]+)"/g)].map(m => m[1]);
@@ -47,14 +33,74 @@ const local = assets.filter(a => !/^https?:/.test(a));
 const gone = local.filter(a => !fs.existsSync(path.join(root, a)));
 console.log('asset files missing         : ' + (gone.length ? gone.join(', ') : 'none'));
 
-/* --- skills count (the brief asked for the last two removed) --- */
-const items = [...block.matchAll(/"key":/g)].length;
-console.log('skill tiles                 : ' + items + (items === 4 ? '  (ok — 4, was 6)' : '  (expected 4)'));
+/* --- hero preload in index.html must match module 1's src ---
+   index.html preloads the first asset so it starts downloading before
+   settings.js / content.js / app.js parse. If content.js's first image
+   module ever changes, that preload would silently point at a file the
+   page no longer shows (wasted bandwidth + no prefetch). Keep them equal,
+   and keep `as`/`type` honest about what the file actually is — a video
+   preloaded as `as="image"` is dropped by the browser and buys nothing. */
+const preloadIssues = [];
+const html = read('index.html');
+const preTag = (html.match(/<link\s+rel="preload"[^>]*>/) || [])[0] || '';
+const pre = (preTag.match(/href="([^"]+)"/) || [])[1];
+const preAs = (preTag.match(/as="([^"]+)"/) || [])[1];
+const preType = (preTag.match(/type="([^"]+)"/) || [])[1];
+const firstImage = (content.match(/"type":\s*"image"[\s\S]{0,400}?"src":\s*"([^"]+)"/) || [])[1];
+const wantAs = firstImage && /\.(mp4|webm|mov|m4v)$/i.test(firstImage) ? 'video' : 'image';
+const wantType = wantAs === 'video' ? 'video/mp4' : undefined;
+const typeOk = wantType ? preType === wantType : true;
 
-/* --- slide height sanity: does the intro fit above EDUCATION? --- */
-const body = (block.match(/"body":\s*"([^"]+)"/) || [])[1] || '';
-console.log('intro characters            : ' + body.length +
-            (body.length < 620 ? '  (fits the 440px column)' : '  (may collide — raise min-height)'));
+console.log('hero preload vs module 1    : ' +
+  (!pre ? 'no preload in index.html'
+        : !firstImage ? 'no first image module in content.js'
+        : pre !== firstImage ? 'MISMATCH preload=' + pre + ' src=' + firstImage
+        : preAs !== wantAs ? 'MISMATCH as=' + preAs + ' but module 1 is a ' + wantAs
+        : !typeOk ? 'MISMATCH type=' + preType + ' expected ' + wantType
+        : pre + '  (as=' + preAs + ')'));
+if (!pre) preloadIssues.push('index.html is missing the hero <link rel="preload">');
+else if (!firstImage) preloadIssues.push('content.js has no first image module to match');
+else if (pre !== firstImage) preloadIssues.push('preload (' + pre + ') !== module 1 src (' + firstImage + ')');
+else if (preAs !== wantAs) preloadIssues.push('preload as="' + preAs + '" but module 1 is a ' + wantAs);
+else if (!typeOk) preloadIssues.push('preload type (' + preType + ') !== ' + wantType);
+
+/* --- motion pages: the eight animated pages ship as MP4, and app.js must
+   actually render them as <video> with src attached on demand.
+   Reverting a ref to .gif, or dropping the observer that attaches the
+   other seven srcs, would silently reintroduce the multi-megabyte GIF
+   load this refactor exists to remove — so gate it. --- */
+const motionIssues = [];
+const gifRefs = [...content.matchAll(/"[^"]*\.gif(?:[?#][^"]*)?"/g)].map(m => m[0]);
+console.log('content.js .gif refs        : ' + (gifRefs.length ? gifRefs.join(', ') : 'none  (ok)'));
+if (gifRefs.length) motionIssues.push('content.js still references .gif: ' + gifRefs.join(', '));
+
+const motionGates = [
+  ['renders <video>', /createElement\(\s*'video'\s*\)/.test(app)],
+  ['detects motion by extension', /function isMotion\(/.test(app)],
+  ['attaches src only for the hero', /if \(!motion \|\| priority === 'high'\)/.test(app)],
+  ['initMotionPlay defined', /function initMotionPlay\(/.test(app)],
+  ['initMotionPlay called from boot', /\binitMotionPlay\(\);/.test(app)],
+  ['observes .stream video', /querySelectorAll\(\s*'\.stream video'\s*\)/.test(app)],
+  ['holds the first frame under prefers-reduced-motion', /priority === 'high' && !reduceMotion/.test(app)],
+  ['queries both media kinds for drift', /querySelector\(\s*'img,video'\s*\)/.test(app)],
+  ['lightbox has a video slot', /id="lbVid"/.test(html)],
+  ['lightbox releases the video', /function lbReleaseVideo\(/.test(app)],
+];
+const motionBad = motionGates.filter(([, ok2]) => !ok2).map(([name]) => name);
+console.log('motion rendering pipeline   : ' + (motionBad.length ? 'MISSING ' + motionBad.join(', ') : 'all ' + motionGates.length + ' present'));
+if (motionBad.length) motionIssues.push('missing: ' + motionBad.join(', '));
+
+/* --- .shot video must be styled, or motion pages render at the UA's
+   default inline size inside an otherwise absolutely-positioned box --- */
+const shotVideoCss = /\.shot[^{}]*\bvideo\b/.test(css);
+console.log('.shot video styled          : ' + (shotVideoCss ? 'yes  (ok)' : 'MISSING'));
+if (!shotVideoCss) motionIssues.push('styles.css has no .shot video rule');
+
+/* --- the setting the observer reads must still exist under its new name --- */
+const settingsNow = read('settings.js');
+const motionBlock = (settingsNow.match(/motion:\s*\{([\s\S]*?)\n  \}/) || [])[1] || '';
+console.log('settings.motion block       : ' + (/pauseWhenHidden\s*:/.test(motionBlock) ? 'pauseWhenHidden present  (ok)' : 'MISSING pauseWhenHidden'));
+if (!/pauseWhenHidden\s*:/.test(motionBlock)) motionIssues.push('settings.js is missing motion.pauseWhenHidden');
 
 /* --- videogrid module (page 8) --- */
 const vgIssues = [];
@@ -125,7 +171,7 @@ const sMissing = sFlags.filter(f => !new RegExp('\\b' + f + '\\s*:').test(sBlock
 console.log('videoGrid settings flags    : ' + (sMissing.length ? 'MISSING ' + sMissing.join(', ') : 'all ' + sFlags.length + ' present'));
 if (sMissing.length) vgIssues.push('settings.js missing: ' + sMissing.join(', '));
 
-/* --- isolation: drift, GIF-pause and the lightbox must never touch tiles --- */
+/* --- isolation: drift, motion playback and the lightbox must never touch tiles --- */
 const vgSrc = app.slice(app.indexOf('function videoTile'),
                         app.indexOf('/* Common wrapper'));
 // strip comments first, otherwise the word "autoplay" inside an explanatory
@@ -139,6 +185,14 @@ if (/preload\s*=\s*['"]auto/.test(vgCode)) isolation.push('uses preload="auto"')
 console.log('videogrid isolation         : ' + (isolation.length ? isolation.join(', ') : 'no .shot, no zoomables, no autoplay, no preload=auto'));
 if (isolation.length) vgIssues.push('isolation broken: ' + isolation.join(', '));
 
-console.log(missing.length || absent.length || gone.length || items !== 4 || vgIssues.length
-  ? '\nRESULT: issues found' + (vgIssues.length ? '\n  videogrid: ' + vgIssues.join('; ') : '')
-  : '\nRESULT: all checks passed');
+const ok = !missing.length && !gone.length && !vgIssues.length && !preloadIssues.length && !motionIssues.length;
+
+console.log(ok
+  ? '\nRESULT: all checks passed'
+  : '\nRESULT: issues found'
+    + (preloadIssues.length ? '\n  preload: ' + preloadIssues.join('; ') : '')
+    + (motionIssues.length ? '\n  motion: ' + motionIssues.join('; ') : '')
+    + (vgIssues.length ? '\n  videogrid: ' + vgIssues.join('; ') : ''));
+
+// A gate that always exits 0 gates nothing — fail the run on any issue.
+process.exit(ok ? 0 : 1);
