@@ -27,7 +27,7 @@ const CONTENT = {
     {
       "n": 2,
       "type": "image",
-      "src": "assets/pics&gifs/new2.mp4",
+      "src": "assets/pics&gifs/2_edited.gif",
       "w": 1536,
       "h": 874,
       "caption": "",
@@ -36,7 +36,7 @@ const CONTENT = {
     {
       "n": 3,
       "type": "image",
-      "src": "assets/pics&gifs/new3.mp4",
+      "src": "assets/pics&gifs/3_edited.gif",
       "w": 1536,
       "h": 874,
       "caption": "",
