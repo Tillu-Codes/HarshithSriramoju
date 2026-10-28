@@ -11,8 +11,8 @@
 
 const CONTENT = {
   "meta": {
-    "title": "GRAPHIC DESIGN PORTFOLIO 2026",
-    "description": "This portfolio showcases selected works created throughout 2025–2026.\n\nEvery project reflects my approach to solving visual problems through strategy, storytelling, and design. Thank you for taking the time to explore my work.\n\nLet's create something INSANE!"
+    "title": "Harshith Sriramoju — Graphic Design & Video Editing Portfolio",
+    "description": "Harshith Sriramoju is a graphic designer and video editor. Selected work from 2025–2026: brand visuals, motion graphics, short-form edits, VFX and showreels."
   },
   "modules": [
     {

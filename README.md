@@ -12,6 +12,10 @@ js/app.js       renders content.js and drives the effects from settings.js
 assets/pics&gifs/    the images shown on the page
 assets/videos/       the six clips in the video grid
 assets/thumbnails/   optimised poster stills (see below)
+assets/og-image.jpg  1200x630 social-card image (see "SEO" below)
+robots.txt          crawler rules + sitemap pointer
+sitemap.xml         the one URL on the site
+googlee484d….html   Google Search Console proof-of-ownership (do not delete)
 ```
 
 ## What's on the page
@@ -39,8 +43,8 @@ the images. The page opens straight on image 1.
 Everything textual lives in `content.js`:
 
 ```js
-meta.title        // "GRAPHIC DESIGN PORTFOLIO 2026"
-meta.description  // the intro paragraph (browser tab + meta tag only)
+meta.title        // "Harshith Sriramoju — Graphic Design & Video Editing Portfolio"
+meta.description  // one sentence, under 160 chars (see "SEO" below)
 modules[n].caption
 modules[n].alt
 ```
@@ -228,6 +232,37 @@ Setting `enabled: false` on any block removes that behaviour entirely. The
 `prefers-reduced-motion` media query switches off the reveal, drift and
 smooth-scroll effects, and holds each motion page on its first frame
 instead of playing it.
+
+## SEO
+
+The page is almost entirely images, so the text Google has to work with is
+the `<head>` and nothing else. That makes three things load-bearing:
+
+**`index.html` carries the title and description statically.**
+`content.js` re-applies the same two strings at runtime, but the HTML is
+what a crawler sees if it never executes the scripts — so the values exist
+in both places and `tools/check.js` fails the run if they drift apart. The
+description is a single sentence under 160 characters, because Google
+truncates anything longer. Change the wording in **both** files.
+
+**Keep the URL stable.** `index.html` declares a canonical URL, and
+`sitemap.xml` / `robots.txt` both repeat it. If the site ever moves to a
+custom domain, update all four places plus the JSON-LD block — `check.js`
+asserts the canonical, sitemap and robots entries agree.
+
+**Never delete `googlee484d76eb50ce296.html`.** It is the Search Console
+proof-of-ownership for `https://harshithsriramoju.vercel.app/`. Removing or
+renaming it eventually un-verifies the property. It must stay at the repo
+root, since the repo root is the web root.
+
+`assets/og-image.jpg` is the 1200x630 card shown when the link is shared
+on WhatsApp, Slack, LinkedIn or X — a frame from the hero clip, cover-cropped
+and JPEG-compressed. Replace it with any 1200x630 image and every
+`og:image` / `twitter:image` tag follows, no other edits needed.
+
+Structured data (`ProfilePage` + `Person`) sits at the bottom of
+`index.html`, describing who the page belongs to; it is what stops Google
+having to guess a name from a picture-only page.
 
 ## tools/
 

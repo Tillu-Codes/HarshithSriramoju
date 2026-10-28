@@ -1,0 +1,7 @@
+# Everything on this site is public portfolio work, so every crawler
+# gets the whole page. The sitemap line is what lets Google discover it
+# without waiting to be linked from somewhere else.
+User-agent: *
+Allow: /
+
+Sitemap: https://harshithsriramoju.vercel.app/sitemap.xml

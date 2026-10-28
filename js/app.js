@@ -578,9 +578,15 @@
 
   /* ---------------------------------------------------------------- *
    * Document title + meta description (nothing visible on the page)
+   *
+   * index.html already ships both statically, for crawlers that never
+   * run this script. Re-applying them here keeps content.js the single
+   * source of truth when the page is opened locally — but the whole
+   * title is used verbatim, with no suffix appended, so the runtime
+   * value and the static value can never drift apart.
    * ---------------------------------------------------------------- */
   function paintMeta() {
-    if (C.meta && C.meta.title) document.title = C.meta.title + ' — Portfolio';
+    if (C.meta && C.meta.title) document.title = C.meta.title;
     var d = document.querySelector('meta[name="description"]');
     if (d && C.meta && C.meta.description) d.content = C.meta.description;
   }

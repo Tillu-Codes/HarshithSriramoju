@@ -185,14 +185,57 @@ if (/preload\s*=\s*['"]auto/.test(vgCode)) isolation.push('uses preload="auto"')
 console.log('videogrid isolation         : ' + (isolation.length ? isolation.join(', ') : 'no .shot, no zoomables, no autoplay, no preload=auto'));
 if (isolation.length) vgIssues.push('isolation broken: ' + isolation.join(', '));
 
-const ok = !missing.length && !gone.length && !vgIssues.length && !preloadIssues.length && !motionIssues.length;
+/* --- SEO: the static <head> must agree with content.js, and the
+   verification file / sitemap / robots.txt must stay in place.
+   index.html carries title + description itself so crawlers that never
+   execute app.js still get real values; content.js re-applies them at
+   runtime. If the two ever disagree, one of them is a lie to Google, so
+   this fails the run. The Google verification file must never be
+   deleted or renamed - removing it eventually un-verifies the site in
+   Search Console. */
+const seoIssues = [];
+const metaTitle = (content.match(/"title":\s*"([^"]*)"/) || [])[1];
+const metaDesc = (content.match(/"description":\s*"([^"]*)"/) || [])[1];
+const htmlTitle = (html.match(/<title>([\s\S]*?)<\/title>/) || [])[1] || '';
+const htmlDesc = (html.match(/<meta\s+name="description"\s+content="([^"]*)"/) || [])[1] || '';
+const unescape = s => s.replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"');
+if (unescape(htmlTitle) !== metaTitle) seoIssues.push('index.html <title> !== content.js title');
+if (htmlDesc !== metaDesc) seoIssues.push('index.html description !== content.js description');
+if (metaDesc.length > 160) seoIssues.push('description is ' + metaDesc.length + ' chars (Google truncates past ~160)');
+
+const verification = fs.readdirSync(root).filter(f => /^google[a-z0-9]+\.html$/.test(f));
+const verifyOk = verification.length === 1 &&
+  fs.readFileSync(path.join(root, verification[0]), 'utf8').trim() ===
+    'google-site-verification: ' + verification[0];
+if (!verification.length) seoIssues.push('Google verification file is missing from the repo root');
+else if (!verifyOk) seoIssues.push('verification file content does not match its own name');
+
+const canonical = (html.match(/<link\s+rel="canonical"\s+href="([^"]+)"/) || [])[1];
+const sitemapLoc = ((read('sitemap.xml').match(/<loc>([^<]+)<\/loc>/) || [])[1] || '');
+const robotsSitemap = (read('robots.txt').match(/^Sitemap:\s*(\S+)$/mi) || [])[1] || '';
+if (!canonical) seoIssues.push('index.html has no canonical link');
+if (sitemapLoc !== canonical) seoIssues.push('sitemap.xml <loc> !== canonical (' + sitemapLoc + ')');
+if (robotsSitemap !== canonical.replace(/\/?$/, '/') + 'sitemap.xml') seoIssues.push('robots.txt Sitemap line !== canonical + sitemap.xml');
+
+const ogImage = (html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/) || [])[1] || '';
+const ogPath = ogImage.replace(/^https?:\/\/[^/]+\//, '');
+if (!ogImage) seoIssues.push('no og:image (link previews would be blank)');
+else if (!fs.existsSync(path.join(root, ogPath))) seoIssues.push('og:image file missing: ' + ogPath);
+
+console.log('SEO head / verification     : ' +
+  (seoIssues.length ? seoIssues.join('; ')
+                    : 'title+description match content.js, canonical/sitemap/robots agree, ' +
+                      verification[0] + ' in place, og:image present'));
+
+const ok = !missing.length && !gone.length && !vgIssues.length && !preloadIssues.length && !motionIssues.length && !seoIssues.length;
 
 console.log(ok
   ? '\nRESULT: all checks passed'
   : '\nRESULT: issues found'
     + (preloadIssues.length ? '\n  preload: ' + preloadIssues.join('; ') : '')
     + (motionIssues.length ? '\n  motion: ' + motionIssues.join('; ') : '')
-    + (vgIssues.length ? '\n  videogrid: ' + vgIssues.join('; ') : ''));
+    + (vgIssues.length ? '\n  videogrid: ' + vgIssues.join('; ') : '')
+    + (seoIssues.length ? '\n  seo: ' + seoIssues.join('; ') : ''));
 
 // A gate that always exits 0 gates nothing — fail the run on any issue.
 process.exit(ok ? 0 : 1);

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- One page, one URL: the portfolio is a single scrolling document with
+     no routes of its own. Update <lastmod> whenever the content really
+     changes (not on every deploy) - it is a claim, not a timestamp. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://harshithsriramoju.vercel.app/</loc>
+    <lastmod>2026-10-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

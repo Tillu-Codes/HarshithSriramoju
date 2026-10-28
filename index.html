@@ -3,8 +3,43 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title></title>
-<meta name="description" content="">
+
+<!-- ============================== SEO ==============================
+     Title, description and social cards are written statically here
+     rather than left to js/app.js, which can only fill them in after
+     content.js and app.js have run. Search crawlers, link previews and
+     social cards may never execute that JavaScript, so the values have
+     to already exist in the HTML.
+
+     Keep title/description identical to CONTENT.meta in content.js —
+     tools/check.js asserts the two agree. If the site ever moves off
+     vercel.app, change the domain here, in robots.txt, in sitemap.xml
+     and in the JSON-LD block at the bottom of this file. -->
+<title>Harshith Sriramoju — Graphic Design &amp; Video Editing Portfolio</title>
+<meta name="description" content="Harshith Sriramoju is a graphic designer and video editor. Selected work from 2025–2026: brand visuals, motion graphics, short-form edits, VFX and showreels.">
+<link rel="canonical" href="https://harshithsriramoju.vercel.app/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="author" content="Harshith Sriramoju">
+
+<!-- Open Graph + Twitter card: what the link looks like when pasted
+     into WhatsApp, Slack, Discord, LinkedIn or X. og:image is a
+     1200x630 JPEG so the card renders as a wide banner instead of a
+     cropped thumbnail. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Harshith Sriramoju">
+<meta property="og:url" content="https://harshithsriramoju.vercel.app/">
+<meta property="og:title" content="Harshith Sriramoju — Graphic Design &amp; Video Editing Portfolio">
+<meta property="og:description" content="Harshith Sriramoju is a graphic designer and video editor. Selected work from 2025–2026: brand visuals, motion graphics, short-form edits, VFX and showreels.">
+<meta property="og:image" content="https://harshithsriramoju.vercel.app/assets/og-image.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Harshith Sriramoju — graphic design and video editing portfolio">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Harshith Sriramoju — Graphic Design &amp; Video Editing Portfolio">
+<meta name="twitter:description" content="Harshith Sriramoju is a graphic designer and video editor. Selected work from 2025–2026: brand visuals, motion graphics, short-form edits, VFX and showreels.">
+<meta name="twitter:image" content="https://harshithsriramoju.vercel.app/assets/og-image.jpg">
+<meta name="twitter:image:alt" content="Harshith Sriramoju — graphic design and video editing portfolio">
 
 <link rel="stylesheet" href="css/styles.css">
 
@@ -14,6 +49,46 @@
      tools/check.js asserts href + as + type all match module 1's src in
      content.js, so this cannot silently drift out of sync. -->
 <link rel="preload" as="video" type="video/mp4" href="assets/pics&gifs/new1.mp4" fetchpriority="high">
+
+<!-- Structured data: tells Google what this page is (a person's
+     portfolio) and who the person is, instead of it having to infer
+     that from a page with almost no prose on it. Values must stay in
+     sync with the <head> above. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ProfilePage",
+  "@id": "https://harshithsriramoju.vercel.app/#page",
+  "url": "https://harshithsriramoju.vercel.app/",
+  "name": "Harshith Sriramoju — Graphic Design & Video Editing Portfolio",
+  "description": "Harshith Sriramoju is a graphic designer and video editor. Selected work from 2025–2026: brand visuals, motion graphics, short-form edits, VFX and showreels.",
+  "inLanguage": "en",
+  "primaryImageOfPage": {
+    "@type": "ImageObject",
+    "url": "https://harshithsriramoju.vercel.app/assets/og-image.jpg",
+    "width": 1200,
+    "height": 630
+  },
+  "mainEntity": {
+    "@type": "Person",
+    "@id": "https://harshithsriramoju.vercel.app/#person",
+    "name": "Harshith Sriramoju",
+    "url": "https://harshithsriramoju.vercel.app/",
+    "jobTitle": "Graphic Designer & Video Editor",
+    "description": "Graphic designer and video editor working across brand visuals, motion graphics, short-form edits, visual effects and cinematography.",
+    "image": "https://harshithsriramoju.vercel.app/assets/og-image.jpg",
+    "knowsAbout": [
+      "Graphic design",
+      "Brand identity",
+      "Motion graphics",
+      "Video editing",
+      "Short-form video",
+      "Visual effects",
+      "Cinematography"
+    ]
+  }
+}
+</script>
 </head>
 
 <body>
