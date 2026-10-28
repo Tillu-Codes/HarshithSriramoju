@@ -38,7 +38,7 @@
      `priority` is 'high' for the first (above-the-fold) asset, 'low' for
      everything else, so the browser's limited connection slots go to what
      the user is actually looking at first. Returns { box, media }. */
-  function shot(src, w, h, alt, priority) {
+  function shot(src, w, h, alt, priority, poster) {
     var box = document.createElement('div');
     box.className = 'shot';
 
@@ -92,6 +92,15 @@
     // viewport, so loading the page never pulls all eight MP4s at once.
     if (!motion || priority === 'high') media.src = src;
 
+    // A motion page paints nothing at all until its first frame is
+    // decodable, so a video that has not been attached yet - or one held
+    // on the first frame under prefers-reduced-motion - is an empty black
+    // rectangle rather than a picture. The poster is that first frame as
+    // a WebP and is assigned immediately: 6-50 KB each, against the
+    // multi-megabyte video the poster stands in for. It is also the only
+    // thing a screenshot or a crawler that never plays the clip will see.
+    if (motion && poster) media.poster = poster;
+
     // If a local file was placed in assets/, prefer it.
     if (!motion && S.media && S.media.preferLocal) {
       var probe = new Image();
@@ -110,6 +119,16 @@
         // observer starts them — same visible result as native lazy images.
         if (media.readyState >= 2) mark();
         else media.addEventListener('loadeddata', mark, { once: true });
+        // The poster is an ordinary image and arrives long before the
+        // video has a frame, so it must be able to lift the fade on its
+        // own. Without this the box stays at the placeholder colour with
+        // a perfectly good poster painted underneath it.
+        if (poster) {
+          var posterProbe = new Image();
+          posterProbe.onload = mark;
+          posterProbe.onerror = mark;   // never leave a box hidden by a 404
+          posterProbe.src = poster;
+        }
       } else if (media.complete) mark();
       else media.addEventListener('load', mark, { once: true });
     }
@@ -133,7 +152,7 @@
     // arrival, so it gets first claim on the connection; everything after
     // it yields (fetchpriority=low) because it is lazy-loaded anyway.
     var priority = zoomables.length === 0 ? 'high' : 'low';
-    var el = shot(m.src, m.w, m.h, m.alt || m.caption || 'Project image ' + m.n, priority);
+    var el = shot(m.src, m.w, m.h, m.alt || m.caption || 'Project image ' + m.n, priority, m.poster);
     zoomables.push(el.media);
     return wrap(m, el.box);
   }
@@ -144,7 +163,7 @@
       var rowEl = document.createElement('div');
       rowEl.className = 'coll__row';
       row.forEach(function (cell, i) {
-        var el = shot(cell.src, cell.w, cell.h, cell.alt || ('Project image ' + m.n + '.' + (i + 1)));
+        var el = shot(cell.src, cell.w, cell.h, cell.alt || ('Project image ' + m.n + '.' + (i + 1)), undefined, cell.poster);
         el.box.className = 'coll__cell';
         // Weight each tile by its aspect ratio so rows keep a constant height.
         el.box.style.flexGrow = String(cell.flex != null ? cell.flex : 100 / row.length);
@@ -614,6 +633,26 @@
       sec.style.setProperty('--rdelay', ((i % 4) * (r.stagger || 70)) + 'ms');
       revealObserver.observe(sec);
     });
+
+    /* Fail-safe. Everything above is scroll-driven, and a module that
+       never scrolls into view is left at opacity 0 — invisible, though
+       present in the DOM. Two things break on that:
+         - Google's renderer does not reliably scroll before it captures
+           its screenshot, so a page revealed only on scroll can be
+           captured as a blank strip;
+         - a pre-renderer or any client without a working observer would
+           show an empty page and no way to recover.
+       So after failSafeAfter ms every module is revealed whether it was
+       observed or not. Anyone actually reading the page scrolls long
+       before that and still gets the animation; crawlers and blank
+       captures get the whole page. `failSafeAfter: 0` disables the net. */
+    var failSafe = r.failSafeAfter != null ? r.failSafeAfter : 3000;
+    if (failSafe > 0) {
+      window.setTimeout(function () {
+        sections.forEach(function (sec) { sec.classList.add('in'); });
+        if (revealObserver) revealObserver.disconnect();
+      }, failSafe);
+    }
   }
 
   /* ---------------------------------------------------------------- *

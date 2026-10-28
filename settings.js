@@ -19,6 +19,9 @@ const SETTINGS = {
     stagger: 70,           // ms extra delay per item inside a collection
     threshold: 0.12,       // how much of the module must be visible
     once: true,            // true = only animate the first time it appears
+    failSafeAfter: 3000,   // ms before every module is revealed regardless of
+                           // scroll. This is what stops a crawler that never
+                           // scrolls from seeing a blank page; 0 disables it.
   },
 
   /* ---- Ken Burns drift applied to full-bleed images while on screen ---- */

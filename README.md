@@ -64,6 +64,29 @@ while it is on screen and stops when it is not; anything else stays an
 pictures as before, but roughly 73% lighter and decoded off the main
 thread.
 
+**Every MP4 module needs a `poster`.** A `<video preload="none">` paints
+nothing at all until a frame decodes, so without one the box is an empty
+black rectangle — to a visitor on a slow connection, to a link preview,
+and to any crawler that never plays the clip:
+
+```js
+{ "n": 1, "type": "image",
+  "src":    "assets/pics&gifs/new1.mp4",
+  "poster": "assets/thumbnails/optimized/new1-poster.webp",   ← first frame, WebP
+  "w": 1400, "h": 788, "alt": "…" }
+```
+
+The posters are 6–50 KB each against multi-megabyte videos, so they are
+assigned immediately rather than lazily. `tools/check.js` fails the run
+if a motion module is missing one or if the file does not exist. To make
+a new one:
+
+```
+ffmpeg -ss 0.4 -i "assets/pics&gifs/new1.mp4" -frames:v 1 \
+  -vf "scale='min(1200,iw)':-2" -c:v libwebp -quality 80 \
+  assets/thumbnails/optimized/new1-poster.webp
+```
+
 Drop a file into `assets/pics&gifs/`, add an object like the above to
 `content.js`, and reload. `w`/`h` are only the aspect ratio (any unit
 works — they drive the layout box).
@@ -216,7 +239,11 @@ serve the full-size file.
 ### Animations and effects
 `settings.js` — every effect is a labelled block you can switch off or tune:
 
-- `reveal` — modules fade + rise in on scroll (distance, duration, easing, stagger)
+- `reveal` — modules fade + rise in on scroll (distance, duration, easing, stagger).
+  `failSafeAfter` (3000 ms) reveals everything regardless of scroll, so a
+  crawler that never scrolls — or a screenshot taken before one — still sees
+  the whole page instead of a blank strip. `0` disables the net; anything
+  under a second starts to eat the animation for slow readers.
 - `drift` — slow Ken-Burns scale on images as they pass through the viewport
 - `lazy` / `media.fadeIn` — lazy loading with a cross-fade
 - `motion.pauseWhenHidden` — attaches and plays a motion page only as it

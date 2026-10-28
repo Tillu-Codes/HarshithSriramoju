@@ -227,7 +227,36 @@ console.log('SEO head / verification     : ' +
                     : 'title+description match content.js, canonical/sitemap/robots agree, ' +
                       verification[0] + ' in place, og:image present'));
 
-const ok = !missing.length && !gone.length && !vgIssues.length && !preloadIssues.length && !motionIssues.length && !seoIssues.length;
+/* --- motion pages must carry a poster ---
+   A <video preload="none"> paints nothing until a frame decodes, so
+   without a poster every animated page is an empty black box to a
+   screenshot, a crawler, or a visitor on a slow connection. The poster
+   is the same first frame as a small WebP and must exist on disk. */
+const renderIssues = [];
+const motionModules = [...content.matchAll(
+  /\{[^{}]*"src":\s*"(assets\/[^"]+\.(?:mp4|webm|mov|m4v))"[^{}]*\}/gi)];
+const noPoster = motionModules
+  .filter(m => !/"poster":\s*"/.test(m[0]))
+  .map(m => m[1]);
+const badPoster = motionModules
+  .map(m => [(m[0].match(/"poster":\s*"([^"]+)"/) || [])[1]])
+  .filter(p => p[0] && !fs.existsSync(path.join(root, p[0])))
+  .map(p => p[0]);
+if (noPoster.length) renderIssues.push('motion pages with no poster: ' + noPoster.join(', '));
+if (badPoster.length) renderIssues.push('poster files missing: ' + badPoster.join(', '));
+console.log('motion posters              : ' +
+  (renderIssues.length ? renderIssues.join('; ')
+                       : motionModules.length + '/' + motionModules.length + ' present'));
+
+/* --- the reveal fail-safe must survive ---
+   reveal is opacity-0-until-scrolled; without the net, anything that
+   never scrolls (Google's renderer before it screenshots, a
+   pre-renderer) sees a blank page. Cheap to lose in a refactor. */
+const failSafeOk = /failSafeAfter/.test(app) && /setTimeout[\s\S]{0,400}classList\.add\('in'\)/.test(app);
+if (!failSafeOk) renderIssues.push('reveal has no fail-safe timer (blank-page risk for crawlers)');
+console.log('reveal fail-safe            : ' + (failSafeOk ? 'present' : 'MISSING'));
+
+const ok = !missing.length && !gone.length && !vgIssues.length && !preloadIssues.length && !motionIssues.length && !seoIssues.length && !renderIssues.length;
 
 console.log(ok
   ? '\nRESULT: all checks passed'
@@ -235,7 +264,8 @@ console.log(ok
     + (preloadIssues.length ? '\n  preload: ' + preloadIssues.join('; ') : '')
     + (motionIssues.length ? '\n  motion: ' + motionIssues.join('; ') : '')
     + (vgIssues.length ? '\n  videogrid: ' + vgIssues.join('; ') : '')
-    + (seoIssues.length ? '\n  seo: ' + seoIssues.join('; ') : ''));
+    + (seoIssues.length ? '\n  seo: ' + seoIssues.join('; ') : '')
+    + (renderIssues.length ? '\n  render: ' + renderIssues.join('; ') : ''));
 
 // A gate that always exits 0 gates nothing — fail the run on any issue.
 process.exit(ok ? 0 : 1);
